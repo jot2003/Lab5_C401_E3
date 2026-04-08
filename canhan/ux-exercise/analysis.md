@@ -41,7 +41,9 @@ Theo trang giới thiệu, NEO được định vị là trợ lý hỗ trợ nh
 
 ![Screenshot chat NEO (2)](Neo_image/Screenshot%202026-04-08%20114213.png)
 
-**Tài liệu marketing / giới thiệu trợ lý** (tham chiếu phần gap marketing): [Trợ lý ảo của Vietnam Airlines (PDF)](Neo_image/Trợ%20lý%20ảo%20của%20Vietnam%20Airlines.pdf)
+**Tài liệu marketing / giới thiệu trợ lý** (tham chiếu phần gap marketing):
+
+- File: [vietnam-airlines-neo-marketing.pdf](Neo_image/vietnam-airlines-neo-marketing.pdf) — nếu GitHub không xem được bản xem trước PDF, bấm **Download** hoặc mở link **Raw**.
 
 ---
 
