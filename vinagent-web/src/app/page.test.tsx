@@ -5,16 +5,17 @@ import { describe, expect, it } from "vitest";
 import Home from "./page";
 
 describe("Home page", () => {
-  it("renders Phase 4 heading and sections", () => {
+  it("renders Phase 5 heading and sections", () => {
     render(<Home />);
     expect(
-      screen.getByRole("heading", { name: /VinAgent Frontend MVP — Phase 4/i }),
+      screen.getByRole("heading", { name: /VinAgent Frontend MVP — Phase 5/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Scenario Planning/i)).toBeInTheDocument();
     expect(screen.getByText(/Trust & Recovery/i)).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: /Metrics dashboard/i }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Demo presets/i })).toBeInTheDocument();
   });
 
   it("runs low-confidence path and asks for clarification", () => {
@@ -62,6 +63,12 @@ describe("Home page", () => {
     fireEvent.click(screen.getByRole("button", { name: /Generate plans/i }));
     fireEvent.click(screen.getByRole("button", { name: /Acknowledge flags/i }));
     expect(screen.getByText(/Flags acknowledged/i)).toBeInTheDocument();
+  });
+
+  it("runs preset scenario for failure demo", () => {
+    render(<Home />);
+    fireEvent.click(screen.getByRole("button", { name: /Failure fallback/i }));
+    expect(screen.getByText(/Preset executed/i)).toBeInTheDocument();
   });
 
   it("passes accessibility smoke test", async () => {

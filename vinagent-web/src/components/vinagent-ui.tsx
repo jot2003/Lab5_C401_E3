@@ -336,3 +336,53 @@ export function TrustControlPanel({
     </section>
   );
 }
+
+export function ScenarioPresetBar({
+  presets,
+  onPick,
+}: {
+  presets: Array<{ id: string; label: string; prompt: string }>;
+  onPick: (prompt: string) => void;
+}) {
+  return (
+    <section className="card-surface rounded-2xl border p-4">
+      <h3 className="mb-2 text-sm font-semibold">Demo presets</h3>
+      <div className="flex flex-wrap gap-2">
+        {presets.map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            onClick={() => onPick(preset.prompt)}
+            className="focus-ring rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium"
+          >
+            {preset.label}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function SessionSummaryCard({
+  summary,
+  onCopy,
+}: {
+  summary: string;
+  onCopy: () => void;
+}) {
+  return (
+    <section className="card-surface rounded-2xl border p-4">
+      <h3 className="mb-2 text-sm font-semibold">Session summary</h3>
+      <p className="rounded-lg bg-background px-3 py-2 text-xs text-muted">
+        {summary}
+      </p>
+      <button
+        type="button"
+        onClick={onCopy}
+        className="focus-ring mt-3 rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold"
+      >
+        Copy summary
+      </button>
+    </section>
+  );
+}

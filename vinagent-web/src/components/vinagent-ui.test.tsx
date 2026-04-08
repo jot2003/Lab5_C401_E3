@@ -10,6 +10,8 @@ import {
   PromptInput,
   RedFlagPanel,
   ReasoningPanel,
+  ScenarioPresetBar,
+  SessionSummaryCard,
   Toast,
   TrustControlPanel,
 } from "./vinagent-ui";
@@ -88,6 +90,27 @@ describe("VinAgent UI components", () => {
     expect(onToggleAutoAction).toHaveBeenCalledTimes(1);
   });
 
+  it("renders preset bar and session summary actions", () => {
+    const onPick = vi.fn();
+    const onCopy = vi.fn();
+    render(
+      <>
+        <ScenarioPresetBar
+          presets={[
+            { id: "h", label: "Happy path", prompt: "happy prompt" },
+            { id: "l", label: "Low confidence", prompt: "help" },
+          ]}
+          onPick={onPick}
+        />
+        <SessionSummaryCard summary="flow=happy" onCopy={onCopy} />
+      </>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Happy path/i }));
+    expect(onPick).toHaveBeenCalledWith("happy prompt");
+    fireEvent.click(screen.getByRole("button", { name: /Copy summary/i }));
+    expect(onCopy).toHaveBeenCalledTimes(1);
+  });
+
   it("passes accessibility smoke test", async () => {
     const { container } = render(
       <>
@@ -107,6 +130,7 @@ describe("VinAgent UI components", () => {
             },
           ]}
         />
+        <SessionSummaryCard summary="flow=happy" onCopy={() => undefined} />
       </>,
     );
     const results = await axe(container, {

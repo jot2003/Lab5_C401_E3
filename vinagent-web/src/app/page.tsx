@@ -10,6 +10,8 @@ import {
   PromptInput,
   RedFlagPanel,
   ReasoningPanel,
+  ScenarioPresetBar,
+  SessionSummaryCard,
   Toast,
   TrustControlPanel,
 } from "@/components/vinagent-ui";
@@ -36,6 +38,24 @@ const BASE_PLAN_B = [
 ];
 
 export default function Home() {
+  const presets = [
+    {
+      id: "happy",
+      label: "Happy path",
+      prompt: "len lich hk xuan 2026 tranh sang va co giai tich 2",
+    },
+    {
+      id: "low",
+      label: "Low confidence",
+      prompt: "help",
+    },
+    {
+      id: "fail",
+      label: "Failure fallback",
+      prompt: "high risk stale near full",
+    },
+  ];
+
   const [prompt, setPrompt] = useState("");
   const [flow, setFlow] = useState<FlowState>("idle");
   const [selectedPlan, setSelectedPlan] = useState<"A" | "B" | null>(null);
@@ -207,11 +227,23 @@ export default function Home() {
     [isEdited, lastConfidenceScore, redFlags.length, usePlanB],
   );
 
+  const sessionSummary = useMemo(
+    () =>
+      [
+        `flow=${flow}`,
+        `confidence=${lastConfidenceScore}`,
+        `selectedPlan=${selectedPlan ?? "none"}`,
+        `autoAction=${autoActionEnabled ? "on" : "off"}`,
+        `redFlags=${redFlags.length}`,
+      ].join(" | "),
+    [autoActionEnabled, flow, lastConfidenceScore, redFlags.length, selectedPlan],
+  );
+
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 py-8 md:px-8">
       <header className="space-y-2">
         <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-          VinAgent Frontend MVP — Phase 4
+          VinAgent Frontend MVP — Phase 5
         </h1>
         <p className="text-sm text-muted">
           Interactive flows with confidence-aware planner, metrics dashboard, red
@@ -225,7 +257,58 @@ export default function Home() {
         onSubmit={handleGenerate}
       />
       <section className="grid gap-4 lg:grid-cols-2">
+        <ScenarioPresetBar
+          presets={presets}
+          onPick={(presetPrompt) => {
+            setPrompt(presetPrompt);
+            const decision = evaluatePlannerDecision(presetPrompt);
+            setLastConfidenceScore(decision.confidenceScore);
+            const nextFlags: string[] = [];
+            if (!decision.toolSnapshot.dataFresh) {
+              nextFlags.push("Stale SIS data (>5m), can refresh truoc khi submit.");
+            }
+            if (decision.confidenceScore < 70) {
+              nextFlags.push("Confidence duoi 70, khong du dieu kien auto-action.");
+            }
+            if (decision.toolSnapshot.seatRisk === "high") {
+              nextFlags.push("Seat risk cao, uu tien Plan B de tranh fail.");
+            }
+            setRedFlags(nextFlags);
+            setReasonList([
+              ...decision.reasons,
+              `Tool snapshot: ${decision.toolSnapshot.sourceTimestamp}, data ${
+                decision.toolSnapshot.dataFresh ? "fresh" : "stale"
+              }.`,
+            ]);
+            if (decision.flow === "failure") {
+              setFlow("failure");
+              setUsePlanB(decision.needsPlanBFallback);
+              setToast({
+                title: "Preset executed",
+                message: "Scenario failure da duoc kich hoat de demo fallback.",
+              });
+              return;
+            }
+            if (decision.flow === "lowConfidence") {
+              setFlow("lowConfidence");
+              setUsePlanB(decision.needsPlanBFallback);
+              setToast({
+                title: "Preset executed",
+                message: "Scenario low-confidence da duoc kich hoat de demo trust UX.",
+              });
+              return;
+            }
+            setFlow("happy");
+            setUsePlanB(decision.needsPlanBFallback);
+            setToast({
+              title: "Preset executed",
+              message: "Scenario happy path san sang cho demo.",
+            });
+          }}
+        />
         <MetricsPanel metrics={metrics} />
+      </section>
+      <section className="grid gap-4 lg:grid-cols-2">
         <TrustControlPanel
           autoActionEnabled={autoActionEnabled}
           onToggleAutoAction={() => {
@@ -245,6 +328,23 @@ export default function Home() {
                 ? "Auto-action da bat voi dieu kien an toan."
                 : "Auto-action da tat, can xac nhan thu cong.",
             });
+          }}
+        />
+        <SessionSummaryCard
+          summary={sessionSummary}
+          onCopy={async () => {
+            try {
+              await navigator.clipboard.writeText(sessionSummary);
+              setToast({
+                title: "Summary copied",
+                message: "Da copy session summary de bo sung vao advisor brief.",
+              });
+            } catch {
+              setToast({
+                title: "Copy failed",
+                message: "Khong the truy cap clipboard trong moi truong hien tai.",
+              });
+            }
           }}
         />
       </section>
@@ -311,7 +411,8 @@ export default function Home() {
       </main>
 
       <footer className="border-t pt-4 text-xs text-muted">
-        Phase 4 focus: metrics dashboard, red flags, and trust control guardrails.
+        Phase 5 focus: UX polish, demo presets, and handoff-friendly session
+        summary.
       </footer>
     </div>
   );
