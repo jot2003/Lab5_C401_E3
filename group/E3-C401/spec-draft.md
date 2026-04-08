@@ -5,6 +5,13 @@
 **Project:** VinUni StudyFlow AI - Trợ lý tối ưu lịch ôn thi theo năng lượng cá nhân  
 **Deadline Draft:** 23:59 ngày 08/04/2026
 
+**Thành viên nhóm:**
+- Hoang Kim Tri Thanh (2A202600372)
+- Đặng Đinh Tú Anh (2A202600019)
+- Quách Gia Được (2A202600423)
+- Phạm Quốc Dũng (2A202600490)
+- Nguyễn Thanh Nam (2A202600205)
+
 ---
 
 ## Problem Statement
@@ -191,9 +198,9 @@ Tạo lịch ôn thi 7 ngày dựa trên: lịch thi, độ khó môn, năng lư
 
 ## Phân công đề xuất
 
-- Thành viên A: Canvas + Learning signal
-- Thành viên B: 4-path UX + prototype flow
-- Thành viên C: Metrics + threshold + dashboard
-- Thành viên D: Failure modes + mitigation
-- Thành viên E: ROI + Mini spec + pitch
+- Hoang Kim Tri Thanh (2A202600372): Tổng hợp Canvas + Learning Signal, chuẩn hóa cấu trúc SPEC, rà nội dung trước khi nộp.
+- Đặng Đinh Tú Anh (2A202600019): Thiết kế 4-path UX (Happy/Low-confidence/Failure/Recovery), flow màn hình và microcopy.
+- Quách Gia Được (2A202600423): Xây bộ Evaluation Metrics, threshold deploy, red flags và logic theo dõi dashboard.
+- Phạm Quốc Dũng (2A202600490): Xây Failure Modes library, đề xuất mitigation về thiết kế và kỹ thuật.
+- Nguyễn Thanh Nam (2A202600205): Hoàn thiện ROI 3 kịch bản, Mini AI Spec 1 trang, chuẩn bị pitch/demo script.
 
