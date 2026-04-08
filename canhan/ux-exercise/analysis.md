@@ -33,6 +33,16 @@ Theo trang giới thiệu, NEO được định vị là trợ lý hỗ trợ nh
 > **User:** hạng vé phổ thông  
 > **NEO:** Quý khách được miễn cước **1 kiện hành lý ký gửi 23kg**… (và lại nhắc tra cứu bằng mã đặt chỗ / số vé).
 
+## 2b. Hình ảnh & tài liệu (`Neo_image/`)
+
+**Screenshot cuộc chat NEO** (bằng chứng minh họa):
+
+![Screenshot chat NEO (1)](Neo_image/Screenshot%202026-04-08%20114149.png)
+
+![Screenshot chat NEO (2)](Neo_image/Screenshot%202026-04-08%20114213.png)
+
+**Tài liệu marketing / giới thiệu trợ lý** (tham chiếu phần gap marketing): [Trợ lý ảo của Vietnam Airlines (PDF)](Neo_image/Trợ%20lý%20ảo%20của%20Vietnam%20Airlines.pdf)
+
 ---
 
 ## 3. Phân tích 4 paths
