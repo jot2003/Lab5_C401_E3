@@ -1,12 +1,9 @@
 # Bài tập UX — Vietnam Airlines Chatbot NEO
 
-**Học viên:** [Điền họ tên] — **Mã học viên:** [Điền mã]  
-**Sản phẩm (theo đề `02-ux-exercise.md`):** Vietnam Airlines — Chatbot NEO  
-**Truy cập:** vietnamairlines.com hoặc Zalo VNA  
-**Kênh cụ thể mình test:** [Web / Zalo / …]  
-**Ngày test:** [DD/MM/2026]
-
-> **Checklist nộp LMS (đúng template `README.md`):** `MaHocVien-HoTen-Day05.zip` → `Individual/ux-exercise/sketch.jpg` (hoặc `.pdf`) **+** `Individual/ux-exercise/analysis.md`. *(Screenshot: nice-to-have — có thể để trong cùng thư mục hoặc kèm thư mục `Neo_image/`.)*
+**Học viên:** Hoàng Kim Trí Thành — **Mã học viên:** 2A202600372  
+**Sản phẩm:** Vietnam Airlines — Chatbot NEO  
+**Kênh test:** Website vietnamairlines.com (chat với NEO)  
+**Ngày test:** 08/04/2026
 
 ---
 
@@ -53,7 +50,7 @@
 
 ## 3. Phân tích 4 paths
 
-**Framework 4 paths (theo `02-ux-exercise.md`):**
+**Framework 4 paths:**
 
 | Path | Câu hỏi (đề gốc) |
 |------|------------------|
@@ -86,7 +83,7 @@
 
 ---
 
-## 5. Sketch — mô tả để chấm (ảnh kèm sketch.jpg hoặc PDF)
+## 5. Sketch — mô tả (ảnh kèm sketch.jpg)
 
 **As-is (hiện tại)** — luồng ~5 bước, đánh dấu chỗ gãy (X):
 
@@ -112,7 +109,7 @@
 
 ---
 
-## 6. Kết luận ngắn (30 giây khi trình bày nhóm — Phần 4 đề bài)
+## 6. Kết luận ngắn (30 giây khi trình bày)
 
 NEO xử lý tốt kiểu **câu hỏi tier chuẩn**, nhưng với câu hỏi **gắn mã chuyến**, luồng dễ **lệch ngữ cảnh** rồi **lặp kịch bản** khi user cố cung cấp **VN205**. Cải tiến cốt lõi: **phân nhánh chung vs theo vé**, **parse / giải thích mã chuyến**, và **verify + human handoff** ngay khi user mất tin.
 
