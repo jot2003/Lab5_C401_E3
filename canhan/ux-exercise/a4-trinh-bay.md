@@ -2,7 +2,7 @@
 
 **[Họ tên] · [Mã HV] · [Ngày]**
 
-**Hình minh họa:** thư mục `Neo_image/` (2 screenshot chat + PDF giới thiệu). Chi tiết xem `analysis.md` mục 2b.
+**Hình minh họa:** thư mục Neo_image (2 screenshot chat + PDF giới thiệu). Chi tiết xem analysis.md mục 2b.
 
 ---
 
@@ -33,13 +33,13 @@ User hỏi **hành lý chuyến VN205** → bot đưa **bảng nội địa theo
 
 ## Sketch (vẽ lại lên giấy — 2 cột)
 
-**As-is**          | **To-be**
--------------------|--------------------------------------------------
-① Hỏi VN205        | ① Hỏi VN205
-② Bảng chung       | ② Hỏi: **Chung** / **Theo vé**?
-③ “Sai website”    | ③ Nhận **VN205** → xin **ngày bay** hoặc **mã đặt chỗ**
-④ Xin thêm info    | ④ Nếu mất tin → **Link chính sách** + **Tư vấn viên**
-⑤ vn205 → **lặp** **X** | ⑤ Chốt theo vé **hoặc** chuyển người **+**
+| Bước | As-is | To-be |
+|------|--------|--------|
+| ① | Hỏi VN205 | Hỏi VN205 |
+| ② | Bảng chung | Hỏi: **Chung** / **Theo vé**? |
+| ③ | “Sai website” | Nhận **VN205** → xin **ngày bay** hoặc **mã đặt chỗ** |
+| ④ | Xin thêm info | Nếu mất tin → **Link chính sách** + **Tư vấn viên** |
+| ⑤ | vn205 → **lặp (X)** | Chốt theo vé **hoặc** chuyển người **(+)** |
 
 *(In khổ A4 dọc, cỡ chữ 10–11pt; hoặc chép bảng + 2 cột sketch bằng tay.)*
 
