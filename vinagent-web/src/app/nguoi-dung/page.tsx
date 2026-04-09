@@ -13,6 +13,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 
+const EMPTY_INVITES: GroupInvite[] = [];
+const inviteSnapshotCache = new Map<string, { hash: string; value: GroupInvite[] }>();
+
+function getPendingInvitesSnapshot(studentId?: string | null): GroupInvite[] {
+  if (!studentId) return EMPTY_INVITES;
+  const next = getPendingInvitesFor(studentId);
+  const hash = JSON.stringify(next);
+  const cached = inviteSnapshotCache.get(studentId);
+  if (cached && cached.hash === hash) return cached.value;
+  inviteSnapshotCache.set(studentId, { hash, value: next });
+  return next;
+}
+
 export default function UserProfilePage() {
   const router = useRouter();
   const [verification, setVerification] = useState<{ ok: boolean; message: string } | null>(null);
@@ -52,8 +65,8 @@ export default function UserProfilePage() {
         window.removeEventListener("bkagent:invites-changed", onInviteChanged);
       };
     },
-    () => (student ? getPendingInvitesFor(student.id) : []),
-    () => [] as GroupInvite[]
+    () => getPendingInvitesSnapshot(student?.id),
+    () => EMPTY_INVITES
   );
   if (!student) {
     return (
