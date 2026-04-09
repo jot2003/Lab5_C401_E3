@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, CalendarPlus, BarChart3, Plus, MessageSquare, Trash2, History } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import {
   Sidebar,
@@ -32,13 +32,13 @@ export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const [historyOpen, setHistoryOpen] = useState(true);
   const { sessions, currentSessionId, newSession, loadSession, deleteSession } = useBKAgent();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   function handleNewChat() {
     newSession();
