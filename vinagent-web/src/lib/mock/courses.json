@@ -88,5 +88,50 @@
     "description": "Viết báo cáo kỹ thuật, tóm tắt nghiên cứu và trình bày chuyên nghiệp trong môi trường công nghệ.",
     "department": "IT",
     "semester": "20252"
+  },
+  {
+    "code": "IT3011",
+    "nameVi": "Cấu trúc dữ liệu và thuật toán",
+    "nameEn": "Data Structures and Algorithms",
+    "credits": 2,
+    "description": "Cơ sở và cốt lõi ngành",
+    "department": "CNTT",
+    "semester": "20252"
+  },
+  {
+    "code": "IT2030",
+    "nameVi": "Technical Writing and Presentation",
+    "nameEn": "Technical Writing and Presentation",
+    "credits": 3,
+    "description": "Cơ sở và cốt lõi ngành",
+    "department": "CNTT",
+    "semester": "20252"
+  },
+  {
+    "code": "IT3230",
+    "nameVi": "Lập trình C cơ bản",
+    "nameEn": "Basic C Programming",
+    "credits": 2,
+    "description": "Cơ sở và cốt lõi ngành",
+    "department": "CNTT",
+    "semester": "20252"
+  },
+  {
+    "code": "IT3420",
+    "nameVi": "Điện tử cho CNTT",
+    "nameEn": "Electronics for IT",
+    "credits": 2,
+    "description": "Toán và Khoa học cơ bản",
+    "department": "CNTT",
+    "semester": "20252"
+  },
+  {
+    "code": "JP1132",
+    "nameVi": "Tiếng Nhật 3",
+    "nameEn": "Japanese 3",
+    "credits": 0,
+    "description": "Ngoại ngữ 2 mô đun 1",
+    "department": "Ngoại ngữ",
+    "semester": "20252"
   }
 ]
