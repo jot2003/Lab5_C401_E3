@@ -1,4 +1,4 @@
-import rawStudentData from "@/lib/mock/student.json";
+﻿import studentJson from "@/lib/mock/student.json";
 
 export type StudentProfile = {
   id: string;
@@ -9,46 +9,49 @@ export type StudentProfile = {
   gpa: number;
   currentSemester: string;
   completedCourses: string[];
-  inProgressCourses: string[];
-  targetCourses: string[];
-  preferences: {
-    avoidMorning: boolean;
-    avoidAfternoon: boolean;
-    preferGroupFriends: boolean;
-    priorityDays: string[];
-    maxCreditsPerSemester: number;
+  inProgressCourses?: string[];
+  targetCourses?: string[];
+  preferences?: {
+    avoidMorning?: boolean;
+    avoidAfternoon?: boolean;
+    preferGroupFriends?: boolean;
+    priorityDays?: string[];
+    maxCreditsPerSemester?: number;
   };
-  groupFriends: Array<{ id: string; name: string }>;
-  advisorId: string;
-  advisorName: string;
+  groupFriends?: { id: string; name: string }[];
+  advisorId?: string;
+  advisorName?: string;
 };
 
-type CurrentSchemaDataset = StudentProfile & {
+type StudentJsonShape = {
   currentStudentId?: string;
-  students: StudentProfile[];
-};
+  students?: StudentProfile[];
+} & Partial<StudentProfile>;
 
-const studentDataset = rawStudentData as CurrentSchemaDataset;
-
-function toStudents(): StudentProfile[] {
-  return studentDataset.students || [];
-}
-
-export function getAllStudents(): StudentProfile[] {
-  return toStudents();
-}
-
-export function getCurrentStudentId(): string {
-  return studentDataset.currentStudentId || toStudents()[0]?.id || "";
-}
+const data = studentJson as unknown as StudentJsonShape;
 
 export function getStudentById(studentId: string): StudentProfile | null {
-  const students = toStudents();
-  return students.find((s) => s.id === studentId) || null;
+  // Check the students[] array first
+  if (data.students) {
+    const found = data.students.find((s) => s.id === studentId);
+    if (found) return found;
+  }
+
+  // Fall back to flat fields for single-student JSON
+  if (data.id === studentId) {
+    const { students: _s, currentStudentId: _c, ...flat } = data;
+    return flat as StudentProfile;
+  }
+
+  return null;
 }
 
-export function getCurrentStudent(): StudentProfile {
-  const students = toStudents();
-  const currentId = getCurrentStudentId();
-  return students.find((s) => s.id === currentId) || students[0];
+export function getCurrentStudentId(): string | null {
+  return data.currentStudentId ?? null;
+}
+
+export function getDefaultStudent(): StudentProfile | null {
+  const defaultId = data.currentStudentId ?? data.id;
+  if (!defaultId) return null;
+  return getStudentById(defaultId);
 }

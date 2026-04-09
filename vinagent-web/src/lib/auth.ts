@@ -1,9 +1,9 @@
-import {
+﻿import {
   getStudentById as getStudentByIdFromData,
   type StudentProfile,
 } from "@/lib/student-data";
 
-const SESSION_KEY = "vinagent.currentUser";
+const SESSION_KEY = "bkagent.currentUser";
 
 export type AuthResult = {
   ok: boolean;
@@ -37,18 +37,18 @@ export function loginAccount(studentId: string, studentName: string): AuthResult
 
   const student = getStudentById(normalizedId);
   if (!student) {
-    return { ok: false, message: "Mã sinh viên không tồn tại trong student.json." };
+    return { ok: false, message: "Mã sinh viên không tồn tại trong hệ thống HUST." };
   }
 
   if (normalizeName(student.name) !== normalizedName) {
-    return { ok: false, message: "Họ tên không khớp với mã sinh viên." };
+    return { ok: false, message: "Họ tên không khớp với mã sinh viên. Vui lòng kiểm tra lại." };
   }
 
   if (isBrowser()) {
     window.localStorage.setItem(SESSION_KEY, normalizedId);
   }
 
-  return { ok: true, message: "Đăng nhập thành công." };
+  return { ok: true, message: "Đăng nhập thành công. Xin chào, " + student.name + "!" };
 }
 
 export function logoutAccount() {
@@ -75,5 +75,5 @@ export function verifyCurrentStudent(): AuthResult {
     return { ok: false, message: "Thông tin người dùng không khớp dữ liệu gốc." };
   }
 
-  return { ok: true, message: "Đối chiếu thành công với dữ liệu trong student.json." };
+  return { ok: true, message: "Xác thực thành công. Dữ liệu hợp lệ với hệ thống HUST." };
 }

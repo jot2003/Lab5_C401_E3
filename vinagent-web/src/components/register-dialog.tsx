@@ -28,25 +28,23 @@ export function RegisterDialog() {
   const courses =
     store.selectedPlan === "B" ? store.planBCourses : store.planACourses;
   const status = store.registerStatus;
-  const isOpen = store.registerDialogOpen;
-  const setRegisterStatus = store.setRegisterStatus;
 
   useEffect(() => {
-    if (!isOpen || status !== "loading") return;
+    if (!store.registerDialogOpen || status !== "loading") return;
 
     const t1 = setTimeout(() => {}, 1000);
     const t2 = setTimeout(() => {
-      setRegisterStatus("success");
+      store.setRegisterStatus("success");
     }, 2800);
 
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [isOpen, setRegisterStatus, status]);
+  }, [store.registerDialogOpen, status]);
 
   function handleStart() {
-    setRegisterStatus("loading");
+    store.setRegisterStatus("loading");
   }
 
   function handleClose() {

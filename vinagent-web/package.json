@@ -17,7 +17,6 @@
     "@langchain/core": "^1.1.39",
     "@langchain/google": "^0.1.10",
     "@langchain/langgraph": "^1.2.8",
-    "@langchain/openai": "^1.4.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",

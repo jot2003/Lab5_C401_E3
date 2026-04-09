@@ -76,28 +76,36 @@ export const checkScheduleTool = tool(
     const sections = scheduleData.filter((s) =>
       course_codes.includes(s.courseCode)
     );
-    const summary = sections.map((s) => ({
-      classId: s.classId,
-      courseCode: s.courseCode,
-      name: s.courseNameVi,
-      day: s.day,
-      time: `${s.startHour}:00–${s.endHour > Math.floor(s.endHour) ? Math.floor(s.endHour) + ":30" : s.endHour + ":00"}`,
-      room: s.room,
-      seats: `${s.enrolled}/${s.capacity}`,
-      seatRisk: s.seatRisk,
-      session: s.session,
-    }));
+    const now = new Date().toLocaleString("vi-VN");
+    const summary = sections.map((s) => {
+      const entry = s as ScheduleEntry & { slotsRemaining?: number };
+      const slotsRemaining = entry.slotsRemaining ?? (s.capacity - s.enrolled);
+      return {
+        classId: s.classId,
+        courseCode: s.courseCode,
+        name: s.courseNameVi,
+        day: s.day,
+        time: `${s.startHour}:00–${s.endHour > Math.floor(s.endHour) ? Math.floor(s.endHour) + ":30" : s.endHour + ":00"}`,
+        room: s.room,
+        seats: `${s.enrolled}/${s.capacity}`,
+        slotsRemaining,
+        seatRisk: s.seatRisk,
+        session: s.session,
+      };
+    });
 
     const highRisk = sections.filter((s) => s.seatRisk === "high");
+    const criticalSlots = summary.filter((s) => s.slotsRemaining <= 5);
     return JSON.stringify({
       sections: summary,
       total: summary.length,
       highRiskCount: highRisk.length,
-      timestamp: new Date().toLocaleString("vi-VN"),
+      criticalSlotsCount: criticalSlots.length,
+      timestamp: now,
       _citation: {
         type: "sis",
-        title: "Dữ liệu SIS HK 20252 — lịch và chỗ ngồi",
-        detail: `${summary.length} lớp cho ${course_codes.join(", ")}. ${highRisk.length > 0 ? `⚠ ${highRisk.length} lớp gần đầy.` : "Tất cả còn chỗ."} Cập nhật: ${new Date().toLocaleString("vi-VN")}.`,
+        title: `Dữ liệu chỗ ngồi HK 20252 — dk-sis (${now})`,
+        detail: `${summary.length} lớp cho ${course_codes.join(", ")}. ${highRisk.length > 0 ? `⚠ ${highRisk.length} lớp nguy cơ hết chỗ.` : "Tất cả còn chỗ."} ${criticalSlots.length > 0 ? `${criticalSlots.length} lớp còn dưới 5 chỗ!` : ""} Cập nhật: ${now}.`,
       },
     });
   },
@@ -257,6 +265,7 @@ export const generateScheduleTool = tool(
         endHour: s.endHour,
         room: s.room,
         seats: `${s.enrolled}/${s.capacity}`,
+        slotsRemaining: s.capacity - s.enrolled,
         seatRisk: s.seatRisk,
         classId: s.classId,
       })) ?? null;

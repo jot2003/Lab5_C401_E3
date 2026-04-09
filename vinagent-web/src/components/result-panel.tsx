@@ -8,11 +8,9 @@ import { useBKAgent } from "@/lib/store";
 import { VisualCalendar } from "./visual-calendar";
 import { CitationList } from "./citation-popover";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AdvisorBriefSheet } from "./advisor-brief-sheet";
@@ -20,29 +18,63 @@ import { EditPlanSheet } from "./edit-plan-sheet";
 import { RegisterDialog } from "./register-dialog";
 import { GroupInviteSheet } from "./group-invite-sheet";
 
-function ConfidenceBar({ score }: { score: number }) {
-  const label = score >= 80 ? "An toàn" : score >= 60 ? "Cần kiểm tra" : "Rủi ro";
-  const indicatorClass = score >= 80
-    ? "[&>div]:bg-success"
-    : score >= 60
-      ? "[&>div]:bg-warning"
-      : "[&>div]:bg-danger";
-  const borderClass = score >= 80 ? "border-success/30" : score >= 60 ? "border-warning/30" : "border-danger/30";
+function computePlanConfidence(
+  courses: { slotsRemaining?: number; seatRisk?: "low" | "medium" | "high" }[]
+) {
+  if (courses.length === 0) return 0;
+  let score = 100;
+  for (const c of courses) {
+    if (c.seatRisk === "high") score -= 16;
+    else if (c.seatRisk === "medium") score -= 8;
+    if ((c.slotsRemaining ?? 999) <= 3) score -= 10;
+    else if ((c.slotsRemaining ?? 999) <= 8) score -= 5;
+  }
+  return Math.max(35, Math.min(99, Math.round(score)));
+}
+
+function ConfidenceBar({
+  planAScore,
+  planBScore,
+}: {
+  planAScore: number;
+  planBScore: number;
+}) {
+  const aLabel = planAScore >= 80 ? "An toàn" : planAScore >= 60 ? "Cần kiểm tra" : "Rủi ro";
+  const bLabel = planBScore >= 80 ? "An toàn" : planBScore >= 60 ? "Cần kiểm tra" : "Rủi ro";
 
   return (
-    <Card className={cn("border bg-white shadow-sm", borderClass)}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-bold text-primary">Độ tin cậy</span>
-          <span className="font-mono text-2xl font-bold text-foreground">
-            {score}
-            <span className="text-sm text-muted-foreground font-normal">/100</span>
-          </span>
+    <div className="rounded-lg bg-primary text-white shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3">
+        <div>
+          <span className="text-sm font-bold text-white">Độ tin cậy từng plan</span>
+          <p className="text-xs text-white/70 mt-0.5">Tính theo slot còn trống + seat risk</p>
         </div>
-        <Progress value={score} className={cn("h-2", indicatorClass)} />
-        <p className="mt-1.5 text-xs font-medium text-muted-foreground leading-normal">{label}</p>
-      </CardContent>
-    </Card>
+        <div className="text-right">
+          <p className="font-mono text-base font-bold text-white">
+            A: {planAScore}<span className="text-[10px] font-normal text-white/70">/100</span>
+          </p>
+          <p className="font-mono text-base font-bold text-yellow-200">
+            B: {planBScore}<span className="text-[10px] font-normal text-white/70">/100</span>
+          </p>
+        </div>
+      </div>
+      <div className="space-y-1 px-4 pb-3">
+        <div>
+          <div className="mb-0.5 flex items-center justify-between text-[10px] text-white/80">
+            <span>Plan A • {aLabel}</span>
+            <span>{planAScore}/100</span>
+          </div>
+          <Progress value={planAScore} className="h-1.5 bg-white/20 [&>div]:bg-white" />
+        </div>
+        <div>
+          <div className="mb-0.5 flex items-center justify-between text-[10px] text-white/80">
+            <span>Plan B • {bLabel}</span>
+            <span>{planBScore}/100</span>
+          </div>
+          <Progress value={planBScore} className="h-1.5 bg-white/20 [&>div]:bg-yellow-300" />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -76,7 +108,7 @@ function RedFlagBanner({ flags, onAcknowledge }: { flags: string[]; onAcknowledg
   );
 }
 
-function PlanListView({ courses, plan }: { courses: { code: string; name: string; day: string; startHour: number; endHour: number; room?: string }[]; plan: "A" | "B" }) {
+function PlanListView({ courses, plan }: { courses: { code: string; name: string; day: string; startHour: number; endHour: number; room?: string; slotsRemaining?: number; seatRisk?: "low" | "medium" | "high" }[]; plan: "A" | "B" }) {
   return (
     <div className="space-y-2">
       {courses.map((c, idx) => (
@@ -88,9 +120,16 @@ function PlanListView({ courses, plan }: { courses: { code: string; name: string
             {c.code.slice(-3)}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-primary leading-normal">{c.code} — {c.name}</p>
+            <p className={cn("text-sm font-bold leading-normal", plan === "A" ? "text-primary" : "text-[oklch(0.65_0.15_86)]")}>
+              {c.code} — {c.name}
+            </p>
             <p className="text-xs text-muted-foreground leading-normal">
               {c.day} {c.startHour}:00–{c.endHour > Math.floor(c.endHour) ? `${Math.floor(c.endHour)}:30` : `${c.endHour}:00`} · {c.room}
+              {typeof c.slotsRemaining === "number" && (
+                <span className={cn("ml-1", c.seatRisk === "high" ? "text-danger font-semibold" : "")}>
+                  · còn {c.slotsRemaining} chỗ
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -137,6 +176,8 @@ function ReasoningPanel({ reasons, citations }: { reasons: { text: string; citat
 export function ResultPanel() {
   const store = useBKAgent();
   const hasResult = store.flow !== "idle";
+  const planAScore = computePlanConfidence(store.planACourses);
+  const planBScore = computePlanConfidence(store.planBCourses);
 
   useEffect(() => {
     if (store.toast) {
@@ -167,30 +208,42 @@ export function ResultPanel() {
       <div className="flex h-full flex-col overflow-hidden">
         <div className="flex items-center justify-between border-b border-border/50 px-4 py-2.5">
           <Tabs value={store.currentView} onValueChange={(v) => store.setCurrentView(v as "calendar" | "list")}>
-            <TabsList className="h-7">
-              <TabsTrigger value="calendar" className="text-xs px-2.5">
+            <TabsList className="h-7 bg-primary/10 border border-primary/20">
+              <TabsTrigger
+                value="calendar"
+                className="text-xs px-2.5 text-primary/70 data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
                 Lịch học
               </TabsTrigger>
-              <TabsTrigger value="list" className="text-xs px-2.5">
+              <TabsTrigger
+                value="list"
+                className="text-xs px-2.5 text-primary/70 data-[state=active]:bg-primary data-[state=active]:text-white"
+              >
                 Danh sách
               </TabsTrigger>
             </TabsList>
           </Tabs>
           <div className="flex gap-1">
             <Button
-              variant={store.selectedPlan === "A" ? "default" : "ghost"}
               size="sm"
-              className="text-xs h-7"
-              disabled={store.selectedPlan === "A"}
+              className={cn(
+                "text-xs h-7 transition-colors",
+                store.selectedPlan === "A"
+                  ? "bg-primary text-white hover:bg-primary/90"
+                  : "bg-transparent border border-primary/30 text-primary hover:bg-primary hover:text-white"
+              )}
               onClick={() => store.acceptPlan("A")}
             >
               Plan A
             </Button>
             <Button
-              variant={store.selectedPlan === "B" ? "secondary" : "ghost"}
               size="sm"
-              className="text-xs h-7"
-              disabled={store.selectedPlan === "B"}
+              className={cn(
+                "text-xs h-7 transition-colors",
+                store.selectedPlan === "B"
+                  ? "bg-gold text-foreground hover:bg-gold/90"
+                  : "bg-transparent border border-primary/30 text-primary hover:bg-gold hover:text-foreground"
+              )}
               onClick={() => store.acceptPlan("B")}
             >
               Plan B
@@ -198,21 +251,23 @@ export function ResultPanel() {
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
-          <div className="space-y-4 p-4">
-            {store.planACourses.length === 0 && store.planBCourses.length === 0 ? (
-              <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
-                Agent đang tạo kế hoạch...
-              </div>
-            ) : store.currentView === "calendar" ? (
-              <VisualCalendar
-                planA={store.planACourses}
-                planB={store.planBCourses}
-                showPlanB={store.usePlanB || store.flow === "failure" || store.flow === "recovery"}
-                selectedPlan={store.selectedPlan}
-              />
-            ) : (
-              <div className="space-y-4">
+        <div
+          className="flex-1 overflow-y-auto p-4 space-y-4"
+          style={{ scrollbarWidth: "thin", scrollbarColor: "oklch(0.6 0.16 23 / 0.3) transparent" }}
+        >
+          {store.planACourses.length === 0 && store.planBCourses.length === 0 ? (
+            <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
+              Agent đang tạo kế hoạch...
+            </div>
+          ) : store.currentView === "calendar" ? (
+            <VisualCalendar
+              planA={store.planACourses}
+              planB={store.planBCourses}
+              showPlanB={store.usePlanB || store.flow === "failure" || store.flow === "recovery"}
+              selectedPlan={store.selectedPlan}
+            />
+          ) : (
+            <div className="space-y-4">
               {store.planACourses.length > 0 && (
                 <div>
                   <h4 className="mb-2 text-sm font-bold text-primary uppercase tracking-wide">
@@ -229,64 +284,59 @@ export function ResultPanel() {
                   <PlanListView courses={store.planBCourses} plan="B" />
                 </div>
               )}
-              </div>
-            )}
-
-            <ConfidenceBar score={store.confidenceScore} />
-
-            <ReasoningPanel reasons={store.reasons} citations={store.citations} />
-
-            <RedFlagBanner flags={store.redFlags} onAcknowledge={store.acknowledgeFlags} />
-
-            {store.citations.length > 0 && <CitationList citations={store.citations} />}
-
-            <Separator className="opacity-30" />
-
-            <div className="flex flex-wrap gap-2 pb-4">
-              {canRegister && (
-                <Button
-                  size="sm"
-                  className="text-xs gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={() => store.openRegisterDialog()}
-                >
-                  <CheckCircle2 className="size-3" />
-                  Đăng ký ngay
-                </Button>
-              )}
-              {store.planACourses.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs gap-1.5"
-                  onClick={() => store.openGroupInvite()}
-                >
-                  <Users className="size-3" />
-                  Mời bạn đăng ký cùng
-                </Button>
-              )}
-              {store.selectedPlan && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs gap-1.5"
-                  onClick={() => store.openEditPlan()}
-                >
-                  <Pencil className="size-3" />
-                  Chỉnh sửa kế hoạch
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-danger gap-1.5"
-                onClick={store.escalate}
-              >
-                <UserRound className="size-3" />
-                Chuyển cố vấn học vụ
-              </Button>
             </div>
+          )}
+
+          <ConfidenceBar planAScore={planAScore} planBScore={planBScore} />
+          <ReasoningPanel reasons={store.reasons} citations={store.citations} />
+          <RedFlagBanner flags={store.redFlags} onAcknowledge={store.acknowledgeFlags} />
+          {store.citations.length > 0 && <CitationList citations={store.citations} />}
+          <Separator className="opacity-30" />
+
+          <div className="flex flex-wrap gap-2 pb-4">
+            {canRegister && (
+              <Button
+                size="sm"
+                className="text-xs gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={() => store.openRegisterDialog()}
+              >
+                <CheckCircle2 className="size-3" />
+                Đăng ký ngay
+              </Button>
+            )}
+            {store.planACourses.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs gap-1.5"
+                onClick={() => store.openGroupInvite()}
+              >
+                <Users className="size-3" />
+                Mời bạn đăng ký cùng
+              </Button>
+            )}
+            {store.selectedPlan && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs gap-1.5"
+                onClick={() => store.openEditPlan()}
+              >
+                <Pencil className="size-3" />
+                Chỉnh sửa kế hoạch
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-danger gap-1.5"
+              onClick={store.escalate}
+            >
+              <UserRound className="size-3" />
+              Chuyển cố vấn học vụ
+            </Button>
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </>
   );

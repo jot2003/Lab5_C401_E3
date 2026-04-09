@@ -3,9 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, CalendarPlus, BarChart3, User, Plus, MessageSquare, Trash2, History } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useState, useSyncExternalStore } from "react";
+import { Home, CalendarPlus, BarChart3, Plus, MessageSquare, Trash2, History, UserCircle, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getCurrentStudent, logoutAccount } from "@/lib/auth";
+import type { StudentProfile } from "@/lib/student-data";
 
 import {
   Sidebar,
@@ -18,7 +19,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useBKAgent } from "@/lib/store";
 
@@ -26,20 +26,19 @@ const NAV_ITEMS = [
   { href: "/", label: "Trang chủ", icon: Home },
   { href: "/tao-ke-hoach", label: "Tạo kế hoạch", icon: CalendarPlus },
   { href: "/chi-so", label: "Bảng chỉ số", icon: BarChart3 },
-  { href: "/nguoi-dung", label: "Hồ sơ người dùng", icon: User },
+  { href: "/nguoi-dung", label: "Hồ sơ", icon: UserCircle },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
   const [historyOpen, setHistoryOpen] = useState(true);
+  const [currentUser, setCurrentUser] = useState<StudentProfile | null>(null);
   const { sessions, currentSessionId, newSession, loadSession, deleteSession } = useBKAgent();
+
+  useEffect(() => {
+    setCurrentUser(getCurrentStudent());
+  }, [pathname]); // re-check on navigation (login/logout)
 
   function handleNewChat() {
     newSession();
@@ -140,17 +139,52 @@ export function AppSidebar() {
       </SidebarContent>
 
       <div className="border-t border-white/20 p-3">
-        {mounted && (
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-white/80 group-data-[collapsible=icon]:hidden">
-              Dark
-            </span>
-            <Switch
-              checked={theme === "dark"}
-              onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-            />
+        {currentUser ? (
+          <div className="group-data-[collapsible=icon]:hidden">
+            <Link href="/nguoi-dung" className="flex items-center gap-2.5 rounded-lg px-2 py-2 hover:bg-white/10 transition-colors">
+              <div className="size-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <span className="text-xs font-bold text-white">
+                  {currentUser.name.split(" ").map((w) => w[0]).slice(-2).join("")}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-white truncate leading-tight">{currentUser.name}</p>
+                <p className="text-[10px] text-white/60 leading-tight truncate">{currentUser.id} · {currentUser.major}</p>
+              </div>
+            </Link>
+            <button
+              className="mt-1 flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+              onClick={() => { logoutAccount(); setCurrentUser(null); router.push("/dang-nhap"); }}
+            >
+              <LogOut className="size-3" />
+              <span>Đăng xuất</span>
+            </button>
           </div>
+        ) : (
+          <Link
+            href="/dang-nhap"
+            className="group-data-[collapsible=icon]:hidden flex items-center gap-2 rounded-lg px-2 py-2 text-xs text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <UserCircle className="size-4 shrink-0" />
+            <span>Đăng nhập</span>
+          </Link>
         )}
+        {/* Collapsed icon mode: show avatar or login icon */}
+        <div className="group-data-[collapsible=icon]:flex hidden items-center justify-center py-1">
+          {currentUser ? (
+            <Link href="/nguoi-dung" title={currentUser.name}>
+              <div className="size-7 rounded-full bg-white/20 flex items-center justify-center">
+                <span className="text-[10px] font-bold text-white">
+                  {currentUser.name.split(" ").map((w) => w[0]).slice(-2).join("")}
+                </span>
+              </div>
+            </Link>
+          ) : (
+            <Link href="/dang-nhap" title="Đăng nhập">
+              <UserCircle className="size-5 text-white/60 hover:text-white transition-colors" />
+            </Link>
+          )}
+        </div>
       </div>
     </Sidebar>
   );

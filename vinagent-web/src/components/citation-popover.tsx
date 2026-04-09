@@ -18,36 +18,37 @@ export function CitationRef({
   citation?: Citation;
 }) {
   if (!citation) {
+    // Citation ID not in store — show plain superscript, no popover
     return (
-      <span className="inline-flex size-4 items-center justify-center rounded bg-primary px-1 text-[10px] font-bold text-white align-super ml-0.5">
-        {id}
-      </span>
+      <sup className="text-[10px] text-muted-foreground/60 ml-0.5 font-mono select-none">
+        [{id}]
+      </sup>
     );
   }
 
   return (
     <Popover>
-      <PopoverTrigger
-        className="inline-flex h-4 min-w-4 items-center justify-center rounded bg-primary px-1 text-[10px] font-bold text-white transition-colors hover:bg-primary/80 align-super ml-0.5"
-      >
+      <PopoverTrigger className="inline-flex h-4 min-w-4 items-center justify-center rounded bg-primary px-1 text-[10px] font-bold text-white transition-colors hover:bg-primary/80 align-super ml-0.5 cursor-pointer">
         {id}
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-3" side="top" align="center">
-        <div className="mb-2 flex items-center gap-2">
-          <Badge
-            variant="outline"
-            className={cn("text-[10px] leading-normal border-primary/30 text-primary font-semibold")}
-          >
-            {getCitationLabel(citation.type)}
-          </Badge>
-          <span className="font-mono text-[10px] text-muted-foreground">
-            {citation.timestamp}
-          </span>
+      <PopoverContent className="w-80 p-0 overflow-hidden border-primary/30 shadow-xl" side="top" align="center">
+        <div className="bg-primary text-white p-4 rounded-[inherit]">
+          <div className="mb-2 flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className="border-white/40 text-white text-[10px] leading-normal font-semibold bg-white/10"
+            >
+              {getCitationLabel(citation.type)}
+            </Badge>
+            <span className="font-mono text-[10px] text-white/60">
+              {citation.timestamp}
+            </span>
+          </div>
+          <p className="text-sm font-bold text-white leading-normal">{citation.title}</p>
+          <p className="mt-1.5 text-xs text-white/85 leading-relaxed">
+            {citation.detail}
+          </p>
         </div>
-        <p className="text-sm font-bold text-primary leading-normal">{citation.title}</p>
-        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-          {citation.detail}
-        </p>
       </PopoverContent>
     </Popover>
   );

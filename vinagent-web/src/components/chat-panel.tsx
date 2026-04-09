@@ -9,7 +9,6 @@ import { CitationRef } from "./citation-popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const SUGGESTIONS = [
   "Lên lịch HK 20252, tránh sáng, phải có Giải tích II và Vật lý II",
@@ -94,22 +93,25 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
 }
 
 export function ChatPanel() {
-  const { messages, prompt, setPrompt, generate, isTyping, flow, clarify, streamingSteps } =
+  const { messages, prompt, setPrompt, generate, isTyping, flow, clarify, streamingSteps, suggestions, lastGeneratedMsgId } =
     useBKAgent();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (el && typeof el.scrollTo === "function") {
-      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-    }
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages.length, isTyping, streamingSteps.length]);
 
   const isEmpty = messages.length === 0;
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <ScrollArea className="min-h-0 flex-1" ref={scrollRef}>
+      {/* Native scroll div — reliable sticky input at bottom */}
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        style={{ scrollbarWidth: "thin", scrollbarColor: "oklch(0.6 0.16 23 / 0.35) transparent" }}
+      >
         <div className="px-4 py-4 space-y-3">
           {isEmpty && (
             <div className="flex h-full min-h-[60vh] flex-col items-center justify-center text-center">
@@ -148,7 +150,11 @@ export function ChatPanel() {
             <MessageBubble
               key={msg.id}
               message={msg}
-              isLatest={idx === messages.length - 1 && msg.role === "assistant"}
+              isLatest={
+                idx === messages.length - 1 &&
+                msg.role === "assistant" &&
+                msg.id === lastGeneratedMsgId
+              }
             />
           ))}
 
@@ -221,9 +227,32 @@ export function ChatPanel() {
             </div>
           )}
 
+          {/* AI-generated follow-up suggestions */}
+          {suggestions.length > 0 && !isTyping && (
+            <div className="pl-10 space-y-2">
+              <p className="text-xs text-muted-foreground font-medium">Gợi ý tiếp theo:</p>
+              <div className="flex flex-col gap-1.5">
+                {suggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    className="group relative text-left text-sm rounded-lg border border-primary/25 bg-primary/5 hover:bg-primary/12 active:scale-[0.98] transition-all px-3.5 py-2.5 text-primary leading-snug overflow-hidden"
+                    onClick={() => {
+                      setPrompt(s);
+                      generate(s);
+                    }}
+                  >
+                    <span className="absolute inset-0 rounded-lg ring-1 ring-primary/10 group-hover:ring-primary/30 transition-all" />
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {(flow === "lowConfidence" || flow === "idle") &&
             messages.length > 0 &&
-            !isTyping && (
+            !isTyping &&
+            suggestions.length === 0 && (
               <div className="flex gap-2 pl-10">
                 <Button
                   variant="outline"
@@ -244,7 +273,7 @@ export function ChatPanel() {
               </div>
             )}
         </div>
-      </ScrollArea>
+      </div>
 
       <form
         className="flex-shrink-0 border-t border-border/50 px-4 py-3"

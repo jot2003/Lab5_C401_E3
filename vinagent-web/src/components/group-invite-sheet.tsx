@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Users, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useBKAgent } from "@/lib/store";
-import { getCurrentStudent } from "@/lib/student-data";
+import studentData from "@/lib/mock/student.json";
 import {
   Sheet,
   SheetContent,
@@ -14,12 +14,15 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 type Friend = { id: string; name: string };
 
-const GROUP_FRIENDS: Friend[] = getCurrentStudent().groupFriends;
+const GROUP_FRIENDS: Friend[] = (
+  studentData as { groupFriends: Friend[] }
+).groupFriends;
 
 export function GroupInviteSheet() {
   const store = useBKAgent();

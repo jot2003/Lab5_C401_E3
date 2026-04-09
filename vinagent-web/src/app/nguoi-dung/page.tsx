@@ -2,20 +2,20 @@
 
 import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, User, LogOut } from "lucide-react";
-
+import { ShieldCheck, LogOut, User, BookOpen, Star, Calendar, GraduationCap, ChevronRight } from "lucide-react";
 import { getCurrentStudent, logoutAccount, verifyCurrentStudent } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function UserProfilePage() {
   const router = useRouter();
   const [verification, setVerification] = useState<{ ok: boolean; message: string } | null>(null);
+
   const student = useSyncExternalStore(
     () => () => {},
     () => getCurrentStudent(),
-    () => null,
+    () => null
   );
 
   function onVerify() {
@@ -29,75 +29,126 @@ export default function UserProfilePage() {
 
   if (!student) {
     return (
-      <div className="mx-auto flex w-full max-w-lg flex-col justify-center px-4 py-8">
-        <Card className="border-border/50 bg-card">
-          <CardHeader>
-            <CardTitle>Chưa đăng nhập</CardTitle>
-            <CardDescription>
-              Vui lòng đăng nhập để truy cập trang Người dùng.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button asChild>
-              <Link href="/dang-nhap">Đăng nhập</Link>
+      <div className="flex h-full overflow-y-auto items-center justify-center bg-background px-6">
+        <div className="w-full max-w-sm text-center">
+          <div className="mb-6 flex justify-center">
+            <div className="size-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <User className="size-8 text-primary" />
+            </div>
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-2">Chưa đăng nhập</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Vui lòng đăng nhập để truy cập hồ sơ sinh viên của bạn.
+          </p>
+          <Link href="/dang-nhap">
+            <Button className="w-full h-11 bg-primary text-white font-semibold">
+              Đăng nhập ngay
             </Button>
-          </CardContent>
-        </Card>
+          </Link>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8">
-      <Card className="border-border/50 bg-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="size-4" />
-            Hồ sơ người dùng
-          </CardTitle>
-          <CardDescription>
-            Thông tin lấy từ dữ liệu đã đăng nhập và đối chiếu với file student.json.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-            <InfoRow label="Mã sinh viên" value={student.id} />
-            <InfoRow label="Họ tên" value={student.name} />
-            <InfoRow label="Ngành" value={student.major} />
-            <InfoRow label="Năm học" value={String(student.year)} />
-            <InfoRow label="GPA" value={String(student.gpa)} />
-            <InfoRow label="Học kỳ hiện tại" value={student.currentSemester} />
-            <InfoRow label="Cố vấn" value={student.advisorName} />
-            <InfoRow label="Số môn mục tiêu" value={String(student.targetCourses.length)} />
-          </div>
+  const infoRows = [
+    { icon: User, label: "Mã sinh viên", value: student.id },
+    { icon: GraduationCap, label: "Ngành học", value: student.major },
+    { icon: BookOpen, label: "Chương trình", value: student.program ?? "Chuẩn" },
+    { icon: Calendar, label: "Năm học", value: `Năm ${student.year}` },
+    { icon: Star, label: "GPA", value: String(student.gpa) },
+    { icon: Calendar, label: "Học kỳ hiện tại", value: student.currentSemester },
+  ];
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={onVerify} className="gap-1.5">
-              <ShieldCheck className="size-4" />
-              Kiểm tra dữ liệu
-            </Button>
-            <Button onClick={onLogout} variant="outline" className="gap-1.5">
-              <LogOut className="size-4" />
-              Đăng xuất
-            </Button>
+  return (
+    <div className="h-full overflow-y-auto bg-background">
+      {/* Header */}
+      <div className="bg-primary px-6 pt-12 pb-20">
+        <div className="max-w-lg mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <Image src="/hust-logo.svg" alt="HUST" width={16} height={24} />
+            <span className="text-white font-bold text-base">BKAgent</span>
+          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white/80 hover:text-white hover:bg-white/15 gap-1.5 text-xs"
+            onClick={onLogout}
+          >
+            <LogOut className="size-3.5" />
+            Đăng xuất
+          </Button>
+        </div>
+        <div className="max-w-lg mx-auto mt-8 flex items-center gap-4">
+          <div className="size-16 rounded-2xl bg-white/20 flex items-center justify-center shadow-lg">
+            <span className="text-white text-xl font-bold">
+              {student.name.split(" ").map((w) => w[0]).slice(-2).join("")}
+            </span>
           </div>
+          <div>
+            <h1 className="text-xl font-bold text-white">{student.name}</h1>
+            <p className="text-sm text-white/70">{student.major} · HUST</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Card pulled up over header */}
+      <div className="max-w-lg mx-auto px-4 -mt-8">
+        <div className="rounded-2xl border border-border bg-card shadow-lg overflow-hidden">
+          <div className="px-5 py-4 border-b border-border/50">
+            <h3 className="text-sm font-semibold text-foreground">Thông tin sinh viên</h3>
+          </div>
+          <div className="divide-y divide-border/40">
+            {infoRows.map(({ icon: Icon, label, value }) => (
+              <div key={label} className="flex items-center gap-3 px-5 py-3.5">
+                <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Icon className="size-3.5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">{label}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Advisor */}
+        <div className="mt-3 rounded-2xl border border-border bg-card shadow-sm px-5 py-4">
+          <p className="text-xs text-muted-foreground mb-1">Cố vấn học vụ</p>
+          <p className="text-sm font-medium text-foreground">{student.advisorName}</p>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-3 space-y-2">
+          <Button
+            className="w-full h-11 bg-primary hover:bg-primary/90 text-white font-semibold gap-2"
+            onClick={onVerify}
+          >
+            <ShieldCheck className="size-4" />
+            Kiểm tra tính hợp lệ dữ liệu
+          </Button>
 
           {verification && (
-            <div className={verification.ok ? "mt-3 rounded-lg border border-success/30 bg-success/10 p-3 text-sm" : "mt-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm"}>
+            <div className={`rounded-xl px-4 py-3 text-sm ${verification.ok ? "bg-green-50 text-green-700 border border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-900" : "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-900"}`}>
               {verification.message}
             </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-border/50 bg-muted/40 px-3 py-2">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-medium">{value}</p>
+          <Link href="/tao-ke-hoach" className="block">
+            <Button
+              variant="ghost"
+              className="w-full h-11 justify-between text-primary border border-primary/20 hover:bg-primary/5 font-medium"
+            >
+              Bắt đầu lên kế hoạch đăng ký
+              <ChevronRight className="size-4" />
+            </Button>
+          </Link>
+        </div>
+
+        <p className="text-center text-xs text-muted-foreground/50 mt-6 mb-4">
+          Dữ liệu được xác thực từ hệ thống HUST và lưu trên thiết bị của bạn
+        </p>
+      </div>
     </div>
   );
 }

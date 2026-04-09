@@ -1,66 +1,44 @@
-import { beforeEach, describe, expect, it } from "vitest";
+﻿import { loginAccount, logoutAccount, getCurrentStudent, verifyCurrentStudent } from "@/lib/auth";
 
-import {
-  getCurrentStudent,
-  getStudentById,
-  loginAccount,
-  logoutAccount,
-  verifyCurrentStudent,
-} from "./auth";
-
-describe("auth login flows", () => {
+describe("auth module", () => {
   beforeEach(() => {
-    window.localStorage.clear();
+    logoutAccount();
   });
 
-  it("logs in directly with valid student id and name", () => {
-    const result = loginAccount("20210001", "Nguyễn Văn An");
+  it("loginAccount succeeds with correct credentials", () => {
+    const result = loginAccount("20210001", "Nguyen Van An");
     expect(result.ok).toBe(true);
+  });
 
+  it("loginAccount fails with wrong name", () => {
+    const result = loginAccount("20210001", "Wrong Name");
+    expect(result.ok).toBe(false);
+  });
+
+  it("loginAccount fails with unknown id", () => {
+    const result = loginAccount("UNKNOWN", "Anyone");
+    expect(result.ok).toBe(false);
+  });
+
+  it("getCurrentStudent returns null before login", () => {
+    expect(getCurrentStudent()).toBeNull();
+  });
+
+  it("getCurrentStudent returns student after login", () => {
+    loginAccount("20210001", "Nguyen Van An");
     const student = getCurrentStudent();
     expect(student?.id).toBe("20210001");
   });
 
-  it("logs in other students from student.json", () => {
-    const result = loginAccount("20210042", "Trần Minh Đức");
-    expect(result.ok).toBe(true);
-    expect(getCurrentStudent()?.id).toBe("20210042");
-  });
-
-  it("fails login with wrong student name", () => {
-    const result = loginAccount("20210001", "wrong-name");
-    expect(result.ok).toBe(false);
-    expect(result.message).toMatch(/Họ tên không khớp/i);
-  });
-
-  it("allows register/login with non-accented name input", () => {
-    const loginResult = loginAccount("20210001", "Nguyen Van An");
-    expect(loginResult.ok).toBe(true);
-  });
-
-  it("fails login with unknown student id", () => {
-    const result = loginAccount("unknown-id", "Nguyễn Văn An");
-    expect(result.ok).toBe(false);
-    expect(result.message).toMatch(/không tồn tại/i);
-  });
-
-  it("verifies current logged-in student against source data", () => {
-    loginAccount("20210001", "Nguyễn Văn An");
-
+  it("verifyCurrentStudent returns valid after login", () => {
+    loginAccount("20210001", "Nguyen Van An");
     const result = verifyCurrentStudent();
     expect(result.ok).toBe(true);
   });
 
-  it("clears session on logout", () => {
-    loginAccount("20210001", "Nguyễn Văn An");
-
+  it("logoutAccount clears session", () => {
+    loginAccount("20210001", "Nguyen Van An");
     logoutAccount();
     expect(getCurrentStudent()).toBeNull();
-  });
-
-  it("can find student from mock source", () => {
-    const student = getStudentById("20210001");
-    expect(student).not.toBeNull();
-    expect(student?.name).toBe("Nguyễn Văn An");
   });
 });

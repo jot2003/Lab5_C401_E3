@@ -58,12 +58,23 @@ export function VisualCalendar({
             paddingLeft: "4px",
             paddingRight: "4px",
           }}
-          title={`${slot.code} ${slot.name}\n${slot.day} ${slot.startHour}:00–${slot.endHour}:00\n${slot.room ?? ""}`}
+          title={`${slot.code} ${slot.name}\n${slot.day} ${slot.startHour}:00–${slot.endHour}:00\n${slot.room ?? ""}${slot.slotsRemaining != null ? `\nCòn ${slot.slotsRemaining} chỗ` : ""}`}
         >
           <span className="font-semibold">{slot.code}</span>
           <br />
-          <span className="opacity-70 truncate block">{slot.name}</span>
-          {slot.room && <><br /><span className="opacity-50">{slot.room}</span></>}
+          <span className="opacity-80 truncate block">{slot.name}</span>
+          {slot.room && <><br /><span className="opacity-60">{slot.room}</span></>}
+          {slot.slotsRemaining != null && (
+            <span className={cn(
+              "mt-0.5 flex items-center gap-0.5",
+              slot.seatRisk === "high"
+                ? plan === "A" ? "text-yellow-200" : "text-red-700"
+                : "opacity-70"
+            )}>
+              {slot.seatRisk === "high" && "⚠ "}
+              {slot.slotsRemaining} chỗ
+            </span>
+          )}
         </div>
       );
     });
