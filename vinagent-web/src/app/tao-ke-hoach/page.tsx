@@ -1,17 +1,22 @@
 "use client";
 
+import { Group, Panel, Separator } from "react-resizable-panels";
 import { ChatPanel } from "@/components/chat-panel";
 import { ResultPanel } from "@/components/result-panel";
 
 export default function CreatePlanPage() {
   return (
-    <div className="flex flex-1 overflow-hidden h-[calc(100dvh-1px)]">
-      <div className="flex w-full flex-col border-r border-border/50 md:w-[42%] lg:w-[38%]">
+    <Group
+      orientation="horizontal"
+      className="flex flex-1 overflow-hidden h-[calc(100dvh-1px)]"
+    >
+      <Panel defaultSize={38} minSize={28} maxSize={55}>
         <ChatPanel />
-      </div>
-      <div className="hidden flex-1 md:flex md:flex-col">
+      </Panel>
+      <Separator className="w-1.5 bg-border hover:bg-primary/60 active:bg-primary/80 transition-colors cursor-col-resize flex-shrink-0" />
+      <Panel minSize={35}>
         <ResultPanel />
-      </div>
-    </div>
+      </Panel>
+    </Group>
   );
 }

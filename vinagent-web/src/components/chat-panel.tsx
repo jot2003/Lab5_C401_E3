@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send } from "lucide-react";
+import { Send, Loader2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBKAgent, type ChatMessage } from "@/lib/store";
 import { TypingText } from "./typing-text";
@@ -27,12 +27,31 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
     const successTerms = /(\bPlan A\b|thành công|Thành công|đã tạo|Đã tạo|Đã xác nhận|đã xác nhận)/g;
     const infoTerms = /(Độ tin cậy|độ tin cậy)/g;
 
-    return text.split(/(\bPlan [AB]\b|rủi ro|thất bại|cảnh báo|Rủi ro|Thất bại|Cảnh báo|thành công|Thành công|đã tạo|Đã tạo|Đã xác nhận|đã xác nhận|Độ tin cậy|độ tin cậy)/g).map((part, i) => {
-      if (dangerTerms.test(part)) return <span key={i} className="font-bold text-danger">{part}</span>;
-      if (successTerms.test(part)) return <span key={i} className="font-bold text-primary">{part}</span>;
-      if (infoTerms.test(part)) return <span key={i} className="font-semibold text-primary">{part}</span>;
-      return <span key={i}>{part}</span>;
-    });
+    return text
+      .split(
+        /(\bPlan [AB]\b|rủi ro|thất bại|cảnh báo|Rủi ro|Thất bại|Cảnh báo|thành công|Thành công|đã tạo|Đã tạo|Đã xác nhận|đã xác nhận|Độ tin cậy|độ tin cậy)/g
+      )
+      .map((part, i) => {
+        if (dangerTerms.test(part))
+          return (
+            <span key={i} className="font-bold text-danger">
+              {part}
+            </span>
+          );
+        if (successTerms.test(part))
+          return (
+            <span key={i} className="font-bold text-primary">
+              {part}
+            </span>
+          );
+        if (infoTerms.test(part))
+          return (
+            <span key={i} className="font-semibold text-primary">
+              {part}
+            </span>
+          );
+        return <span key={i}>{part}</span>;
+      });
   }
 
   function renderTextWithCitations(text: string) {
@@ -53,9 +72,7 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
     <div className={cn("flex gap-2.5", isUser ? "flex-row-reverse" : "flex-row")}>
       {!isUser && (
         <Avatar className="size-8 shrink-0">
-          <AvatarFallback className="bg-primary text-white text-[11px] font-bold">
-            BK
-          </AvatarFallback>
+          <AvatarFallback className="bg-primary text-white text-[11px] font-bold">BK</AvatarFallback>
         </Avatar>
       )}
       <div
@@ -63,7 +80,7 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
           "max-w-[85%] rounded-lg px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-line",
           isUser
             ? "bg-primary text-white border-0 rounded-tr-sm font-medium"
-            : "border border-border bg-white shadow-sm rounded-tl-sm",
+            : "border border-border bg-white shadow-sm rounded-tl-sm"
         )}
       >
         {!isUser && isLatest && !typingDone ? (
@@ -77,7 +94,8 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
 }
 
 export function ChatPanel() {
-  const { messages, prompt, setPrompt, generate, isTyping, flow, clarify } = useBKAgent();
+  const { messages, prompt, setPrompt, generate, isTyping, flow, clarify, streamingSteps } =
+    useBKAgent();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -85,13 +103,13 @@ export function ChatPanel() {
     if (el && typeof el.scrollTo === "function") {
       el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }
-  }, [messages.length, isTyping]);
+  }, [messages.length, isTyping, streamingSteps.length]);
 
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex h-full flex-col">
-      <ScrollArea className="flex-1" ref={scrollRef}>
+    <div className="flex h-full flex-col overflow-hidden">
+      <ScrollArea className="min-h-0 flex-1" ref={scrollRef}>
         <div className="px-4 py-4 space-y-3">
           {isEmpty && (
             <div className="flex h-full min-h-[60vh] flex-col items-center justify-center text-center">
@@ -100,9 +118,12 @@ export function ChatPanel() {
                   BK
                 </AvatarFallback>
               </Avatar>
-              <h3 className="text-base font-bold text-primary leading-normal">Xin chào! Mình là BKAgent</h3>
+              <h3 className="text-base font-bold text-primary leading-normal">
+                Xin chào! Mình là BKAgent
+              </h3>
               <p className="mt-1.5 max-w-xs text-sm text-muted-foreground leading-relaxed">
-                Mô tả yêu cầu đăng ký học phần bằng ngôn ngữ tự nhiên, mình sẽ tạo kế hoạch tối ưu cho bạn.
+                Mô tả yêu cầu đăng ký học phần bằng ngôn ngữ tự nhiên, mình sẽ tạo kế hoạch tối
+                ưu cho bạn.
               </p>
               <div className="mt-5 flex flex-col gap-2 w-full max-w-xs">
                 {SUGGESTIONS.map((s) => (
@@ -111,7 +132,10 @@ export function ChatPanel() {
                     variant="outline"
                     size="sm"
                     className="h-auto justify-start whitespace-normal text-left text-sm px-3.5 py-2.5 leading-relaxed border-primary/30 text-primary hover:bg-primary hover:text-white transition-colors"
-                    onClick={() => { setPrompt(s); generate(s); }}
+                    onClick={() => {
+                      setPrompt(s);
+                      generate(s);
+                    }}
                   >
                     {s}
                   </Button>
@@ -121,7 +145,11 @@ export function ChatPanel() {
           )}
 
           {messages.map((msg, idx) => (
-            <MessageBubble key={msg.id} message={msg} isLatest={idx === messages.length - 1 && msg.role === "assistant"} />
+            <MessageBubble
+              key={msg.id}
+              message={msg}
+              isLatest={idx === messages.length - 1 && msg.role === "assistant"}
+            />
           ))}
 
           {isTyping && (
@@ -131,42 +159,99 @@ export function ChatPanel() {
                   BK
                 </AvatarFallback>
               </Avatar>
-              <div className="rounded-lg rounded-tl-sm border border-border bg-white shadow-sm px-3 py-2.5">
-                <span className="flex gap-1">
-                  <span className="size-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="size-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="size-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
-                </span>
+              <div className="flex-1 max-w-[85%]">
+                {streamingSteps.length > 0 ? (
+                  <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                    {streamingSteps.map((step) => (
+                      <div key={step.id} className="flex items-center gap-2 text-sm">
+                        {step.type === "tool_start" ? (
+                          <Loader2 className="size-3.5 animate-spin text-primary shrink-0" />
+                        ) : (
+                          <CheckCircle2 className="size-3.5 text-green-600 shrink-0" />
+                        )}
+                        <span
+                          className={cn(
+                            "text-sm",
+                            step.type === "tool_end"
+                              ? "text-muted-foreground"
+                              : "text-primary font-medium"
+                          )}
+                        >
+                          {step.label}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-2 pt-1">
+                      <span className="flex gap-1">
+                        <span
+                          className="size-1.5 rounded-full bg-primary animate-bounce"
+                          style={{ animationDelay: "0ms" }}
+                        />
+                        <span
+                          className="size-1.5 rounded-full bg-primary animate-bounce"
+                          style={{ animationDelay: "150ms" }}
+                        />
+                        <span
+                          className="size-1.5 rounded-full bg-primary animate-bounce"
+                          style={{ animationDelay: "300ms" }}
+                        />
+                      </span>
+                      <span className="text-xs text-muted-foreground">Đang xử lý...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg rounded-tl-sm border border-border bg-white shadow-sm px-3 py-2.5">
+                    <span className="flex gap-1">
+                      <span
+                        className="size-1.5 rounded-full bg-primary animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <span
+                        className="size-1.5 rounded-full bg-primary animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <span
+                        className="size-1.5 rounded-full bg-primary animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {(flow === "lowConfidence" || flow === "idle") && messages.length > 0 && !isTyping && (
-            <div className="flex gap-2 pl-10">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-sm border-primary/30 text-primary hover:bg-primary hover:text-white transition-colors"
-                onClick={() => clarify("avoidMorning")}
-              >
-                Tránh lịch sáng
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-sm border-primary/30 text-primary hover:bg-primary hover:text-white transition-colors"
-                onClick={() => clarify("keepGroup")}
-              >
-                Giữ lớp cùng nhóm
-              </Button>
-            </div>
-          )}
+          {(flow === "lowConfidence" || flow === "idle") &&
+            messages.length > 0 &&
+            !isTyping && (
+              <div className="flex gap-2 pl-10">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm border-primary/30 text-primary hover:bg-primary hover:text-white transition-colors"
+                  onClick={() => clarify("avoidMorning")}
+                >
+                  Tránh lịch sáng
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm border-primary/30 text-primary hover:bg-primary hover:text-white transition-colors"
+                  onClick={() => clarify("keepGroup")}
+                >
+                  Giữ lớp cùng nhóm
+                </Button>
+              </div>
+            )}
         </div>
       </ScrollArea>
 
       <form
-        className="border-t border-border/50 px-4 py-3"
-        onSubmit={(e) => { e.preventDefault(); if (prompt.trim()) generate(prompt.trim()); }}
+        className="flex-shrink-0 border-t border-border/50 px-4 py-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (prompt.trim()) generate(prompt.trim());
+        }}
       >
         <div className="flex gap-2">
           <Input

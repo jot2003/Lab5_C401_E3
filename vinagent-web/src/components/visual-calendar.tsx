@@ -47,9 +47,9 @@ export function VisualCalendar({
           className={cn(
             "absolute rounded-md border px-1 py-1 text-[10px] font-medium leading-tight transition-opacity overflow-hidden",
             plan === "A"
-              ? "bg-[#134D8B]/10 border-[#134D8B]/30 text-foreground"
-              : "bg-[#C72127]/10 border-[#C72127]/30 text-foreground",
-            !isActive && "opacity-25",
+              ? "bg-primary text-white border-primary shadow-sm"
+              : "bg-gold text-foreground border-gold/60 shadow-sm",
+            !isActive && "opacity-30",
           )}
           style={{
             ...style,
@@ -105,13 +105,13 @@ export function VisualCalendar({
       </div>
       <div className="flex items-center gap-4 border-t border-border/50 px-3 py-2 text-[10px]">
         <div className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-sm bg-[#134D8B]/40" />
-          <span className="text-muted-foreground">Plan A — Tối ưu</span>
+          <span className="size-2.5 rounded-sm bg-primary" />
+          <span className="text-muted-foreground font-medium">Plan A — Tối ưu</span>
         </div>
         {showPlanB && (
           <div className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-sm bg-[#C72127]/40" />
-            <span className="text-muted-foreground">Plan B — Dự phòng</span>
+            <span className="size-2.5 rounded-sm bg-gold" />
+            <span className="text-muted-foreground font-medium">Plan B — Dự phòng</span>
           </div>
         )}
       </div>

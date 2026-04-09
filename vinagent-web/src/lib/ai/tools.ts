@@ -4,6 +4,7 @@ import scheduleData from "../mock/schedule.json";
 import coursesData from "../mock/courses.json";
 import prerequisitesData from "../mock/prerequisites.json";
 import studentData from "../mock/student.json";
+import curriculumData from "../mock/curriculum-cttt.json";
 
 type ScheduleEntry = (typeof scheduleData)[number];
 
@@ -298,10 +299,73 @@ export const generateScheduleTool = tool(
   }
 );
 
+// ── Tool 6: Get Recommended Courses from Curriculum ──
+
+type CurriculumEntry = {
+  ma_hp: string;
+  ten_hp: string;
+  ky_hoc: number | null;
+  bat_buoc: boolean | string;
+  tc_dt: number;
+  ghi_chu_loai_hp: string | null;
+};
+
+export const getRecommendedCoursesTool = tool(
+  async () => {
+    const student = studentData;
+    // Map year + current semester to curriculum semester number
+    // "20252" = spring semester → year 2 spring = semester 4
+    const semCode = student.currentSemester ?? "20252";
+    const isSpring = semCode.endsWith("2");
+    const semNum = student.year === 1
+      ? (isSpring ? 2 : 1)
+      : student.year === 2
+        ? (isSpring ? 4 : 3)
+        : student.year * 2;
+
+    const curriculum = curriculumData as CurriculumEntry[];
+    const mandatory = curriculum.filter((c) => c.ky_hoc === semNum && c.bat_buoc === true);
+    const optional = curriculum.filter((c) => c.ky_hoc === semNum && c.bat_buoc === false);
+    const moduleChoice = curriculum.filter((c) => c.ky_hoc === semNum && c.bat_buoc === "chon_module");
+
+    // Filter out already completed courses
+    const completed = student.completedCourses;
+    const mandatoryPending = mandatory.filter((c) => !completed.includes(c.ma_hp));
+
+    return JSON.stringify({
+      semNum,
+      studentYear: student.year,
+      currentSemester: semCode,
+      mandatoryPending: mandatoryPending.map((c) => ({
+        code: c.ma_hp,
+        name: c.ten_hp,
+        credits: c.tc_dt,
+        type: c.ghi_chu_loai_hp,
+      })),
+      mandatory: mandatory.map((c) => ({ code: c.ma_hp, name: c.ten_hp, credits: c.tc_dt })),
+      optional: optional.map((c) => ({ code: c.ma_hp, name: c.ten_hp, credits: c.tc_dt })),
+      moduleChoice: moduleChoice.map((c) => ({ code: c.ma_hp, name: c.ten_hp, credits: c.tc_dt, note: c.ghi_chu_loai_hp })),
+      totalMandatoryCredits: mandatoryPending.reduce((s, c) => s + (c.tc_dt || 0), 0),
+      _citation: {
+        type: "sis",
+        title: `CTĐT CTTT — Học kỳ ${semNum} (HK ${semCode})`,
+        detail: `Sinh viên năm ${student.year}: ${mandatoryPending.length} môn bắt buộc chưa học (${mandatoryPending.map((c) => c.ma_hp).join(", ")}). Nguồn: Chương trình đào tạo CTTT HUST.`,
+      },
+    });
+  },
+  {
+    name: "get_recommended_courses",
+    description:
+      "Lấy danh sách môn học gợi ý theo chương trình đào tạo (CTĐT) của sinh viên cho học kỳ hiện tại. Gọi khi sinh viên chưa nêu môn cụ thể.",
+    schema: z.object({}),
+  }
+);
+
 // ── Export all tools ──
 
 export const allTools = [
   getStudentProfileTool,
+  getRecommendedCoursesTool,
   searchCoursesTool,
   checkScheduleTool,
   checkPrerequisitesTool,

@@ -32,10 +32,11 @@ const SYSTEM_PROMPT = `Bạn là BKAgent — trợ lý AI đăng ký tín chỉ 
 ## Quy trình bắt buộc
 1. Khi sinh viên gửi yêu cầu đăng ký, LUÔN gọi tools theo thứ tự:
    a) get_student_profile — hiểu context sinh viên (ngành, năm, môn đã học)
-   b) search_courses / check_schedule — tra cứu môn và lịch
-   c) check_prerequisites — kiểm tra điều kiện tiên quyết
-   d) generate_schedule — tạo Plan A + Plan B
-2. Nếu sinh viên hỏi chung chung (không nêu môn cụ thể), dùng targetCourses từ student profile.
+   b) get_recommended_courses — nếu sinh viên chưa nêu môn cụ thể, lấy danh sách môn bắt buộc theo CTĐT học kỳ hiện tại và trình bày cho sinh viên, hỏi có muốn điều chỉnh không
+   c) search_courses / check_schedule — tra cứu môn và lịch
+   d) check_prerequisites — kiểm tra điều kiện tiên quyết
+   e) generate_schedule — tạo Plan A + Plan B
+2. Nếu sinh viên hỏi chung chung (không nêu môn cụ thể), LUÔN gọi get_recommended_courses để lấy danh sách môn mặc định theo CTĐT. Trình bày danh sách đó và hỏi sinh viên có muốn điều chỉnh không trước khi xếp lịch.
 3. KHÔNG BAO GIỜ bịa dữ liệu — luôn gọi tool để lấy thông tin thực.
 4. Với môn có LT-BT-TN, phải đảm bảo đăng ký cùng nhóm (groupId).
 
@@ -65,6 +66,11 @@ const SYSTEM_PROMPT = `Bạn là BKAgent — trợ lý AI đăng ký tín chỉ 
 - Nhắc sinh viên tận dụng đợt điều chỉnh nếu đợt chính không thành công.`;
 
 // ── Types ──
+
+export type StreamEvent =
+  | { type: "tool_start"; tool: string; label: string }
+  | { type: "tool_end"; tool: string; label: string; summary?: string }
+  | { type: "done"; text: string; citations: Citation[]; confidenceScore: number; flow: "happy" | "lowConfidence" | "failure"; planA: PlanSlot[] | null; planB: PlanSlot[] | null; toolsUsed: string[] };
 
 export type AgentResponse = {
   text: string;
@@ -224,4 +230,128 @@ export async function runAgent(
   else if (confidenceScore < 80) flow = "lowConfidence";
 
   return { text, citations, confidenceScore, flow, planA, planB, toolsUsed };
+}
+
+// ── Tool label map ──
+
+const TOOL_LABELS: Record<string, string> = {
+  get_student_profile: "Đang đọc hồ sơ sinh viên...",
+  get_recommended_courses: "Đang tra cứu CTĐT học kỳ này...",
+  search_courses: "Đang tìm kiếm môn học...",
+  check_schedule: "Đang kiểm tra lịch và chỗ ngồi...",
+  check_prerequisites: "Đang kiểm tra điều kiện tiên quyết...",
+  generate_schedule: "Đang tạo Plan A + Plan B...",
+};
+
+// ── Stream Agent ──
+
+export async function* streamAgent(
+  userMessage: string,
+  history: { role: "user" | "model"; text: string }[]
+): AsyncGenerator<StreamEvent> {
+  const graph = buildGraph();
+
+  const { HumanMessage, AIMessage: AIM, SystemMessage: SM } = await import("@langchain/core/messages");
+  const messages: BaseMessage[] = [new SM(SYSTEM_PROMPT)];
+
+  for (const h of history) {
+    if (h.role === "user") messages.push(new HumanMessage(h.text));
+    else messages.push(new AIM(h.text));
+  }
+  messages.push(new HumanMessage(userMessage));
+
+  const citations: Citation[] = [];
+  let citationCounter = 1;
+  let planA: PlanSlot[] | null = null;
+  let planB: PlanSlot[] | null = null;
+  const toolsUsed: string[] = [];
+
+  const stream = graph.streamEvents(
+    { messages },
+    { version: "v2", recursionLimit: 15 }
+  );
+
+  for await (const event of stream) {
+    // Tool start: agent node emitting tool_calls
+    if (event.event === "on_tool_start") {
+      const toolName = event.name as string;
+      toolsUsed.push(toolName);
+      yield {
+        type: "tool_start",
+        tool: toolName,
+        label: TOOL_LABELS[toolName] ?? `Đang gọi ${toolName}...`,
+      };
+    }
+
+    // Tool end: tool node returning result
+    if (event.event === "on_tool_end") {
+      const toolName = event.name as string;
+      let summary = "";
+      try {
+        const output = event.data?.output;
+        const content = typeof output === "string" ? output : JSON.stringify(output);
+        const parsed = JSON.parse(content);
+        if (parsed._citation) {
+          const cit = parsed._citation as { type: string; title: string; detail: string };
+          citations.push({
+            id: citationCounter++,
+            type: cit.type as Citation["type"],
+            title: cit.title,
+            detail: cit.detail,
+            timestamp: new Date().toLocaleString("vi-VN"),
+          });
+          summary = cit.detail.slice(0, 80);
+        }
+        if (parsed.planA) planA = parsed.planA;
+        if (parsed.planB) planB = parsed.planB;
+      } catch {
+        // ignore parse errors
+      }
+      yield {
+        type: "tool_end",
+        tool: toolName,
+        label: TOOL_LABELS[toolName]?.replace("Đang", "Hoàn thành") ?? `Xong ${toolName}`,
+        summary,
+      };
+    }
+  }
+
+  // Re-invoke to get final text (streamEvents doesn't give us final AI message easily)
+  const finalResult = await graph.invoke({ messages }, { recursionLimit: 15 });
+  const lastMessage = finalResult.messages[finalResult.messages.length - 1];
+  let text =
+    typeof lastMessage.content === "string"
+      ? lastMessage.content
+      : JSON.stringify(lastMessage.content);
+
+  text = text.replace(/\[citation:(\d+)\]/g, "[$1]");
+
+  // Collect any citations missed from invoke pass
+  for (const msg of finalResult.messages) {
+    if (msg._getType() === "tool") {
+      try {
+        const content = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content);
+        const parsed = JSON.parse(content);
+        if (parsed._citation && !citations.find((c) => c.title === parsed._citation.title)) {
+          citations.push({
+            id: citationCounter++,
+            type: parsed._citation.type as Citation["type"],
+            title: parsed._citation.title,
+            detail: parsed._citation.detail,
+            timestamp: new Date().toLocaleString("vi-VN"),
+          });
+        }
+        if (!planA && parsed.planA) planA = parsed.planA;
+        if (!planB && parsed.planB) planB = parsed.planB;
+      } catch { /* skip */ }
+    }
+  }
+
+  const scoreMatch = text.match(/Điểm tin cậy:\s*(\d+)/);
+  const confidenceScore = scoreMatch ? parseInt(scoreMatch[1], 10) : 85;
+  let flow: "happy" | "lowConfidence" | "failure" = "happy";
+  if (confidenceScore < 50) flow = "failure";
+  else if (confidenceScore < 80) flow = "lowConfidence";
+
+  yield { type: "done", text, citations, confidenceScore, flow, planA, planB, toolsUsed };
 }
