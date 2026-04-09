@@ -7,6 +7,120 @@ import studentData from "../mock/student.json";
 import curriculumData from "../mock/curriculum-cttt.json";
 
 type ScheduleEntry = (typeof scheduleData)[number];
+type GenericRecord = Record<string, unknown>;
+type NormalizedScheduleEntry = {
+  classId: string;
+  courseCode: string;
+  courseNameVi: string;
+  courseNameEn: string;
+  credits: number;
+  day: "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
+  startHour: number;
+  endHour: number;
+  room: string;
+  enrolled: number;
+  capacity: number;
+  slotsRemaining: number;
+  session: string;
+  semester: string;
+  seatRisk: "high" | "medium" | "low";
+};
+
+function safeNum(value: unknown, fallback = 0): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const cleaned = value.replace(",", ".").trim();
+    const n = Number(cleaned);
+    if (Number.isFinite(n)) return n;
+  }
+  return fallback;
+}
+
+function normalizeDay(raw: unknown): "Mon" | "Tue" | "Wed" | "Thu" | "Fri" {
+  const v = String(raw ?? "").trim().toLowerCase();
+  if (v === "2" || v === "mon" || v === "monday") return "Mon";
+  if (v === "3" || v === "tue" || v === "tuesday") return "Tue";
+  if (v === "4" || v === "wed" || v === "wednesday") return "Wed";
+  if (v === "5" || v === "thu" || v === "thursday") return "Thu";
+  if (v === "6" || v === "fri" || v === "friday") return "Fri";
+  return "Mon";
+}
+
+function normalizeCourse(record: GenericRecord) {
+  const code = String(record.code ?? record.ma_hp ?? record.courseCode ?? "").trim();
+  if (!code) return null;
+  return {
+    code,
+    nameVi: String(record.nameVi ?? record.ten_hp ?? record.courseNameVi ?? record.name ?? code).trim(),
+    nameEn: String(record.nameEn ?? record.courseNameEn ?? record.ten_hp ?? code).trim(),
+    credits: safeNum(record.credits ?? record.tc_dt, 0),
+    semester: String(record.semester ?? record.ky_hoc ?? "20252"),
+    department: String(record.department ?? ""),
+    description: String(record.description ?? ""),
+  };
+}
+
+function normalizeTimeLabel(startHour: number, endHour: number): string {
+  const toClock = (hour: number) => {
+    const h = Math.floor(hour);
+    const m = Math.round((hour - h) * 60);
+    return `${h}:${String(m).padStart(2, "0")}`;
+  };
+  return `${toClock(startHour)}–${toClock(endHour)}`;
+}
+
+function normalizeScheduleEntry(record: GenericRecord): NormalizedScheduleEntry | null {
+  const classId = String(record.classId ?? record["Mã_lớp"] ?? record["Ma_lop"] ?? "").trim();
+  const courseCode = String(record.courseCode ?? record["Mã_HP"] ?? record["Ma_HP"] ?? "").trim();
+  if (!classId || !courseCode) return null;
+
+  const startHour = safeNum(record.startHour, NaN);
+  const endHour = safeNum(record.endHour, NaN);
+  if (!Number.isFinite(startHour) || !Number.isFinite(endHour)) return null;
+
+  const capacity = safeNum(record.capacity ?? record["SL_Max"], 0);
+  const enrolled = safeNum(record.enrolled ?? record["SLĐK"] ?? record["SL?K"], 0);
+  if (capacity <= 0) return null;
+  const slotsRemaining = safeNum(record.slotsRemaining, capacity - enrolled);
+  const ratio = capacity > 0 ? slotsRemaining / capacity : 0;
+
+  let seatRisk = String(record.seatRisk ?? "").trim().toLowerCase();
+  if (!seatRisk) {
+    if (slotsRemaining <= 5 || ratio <= 0.1) seatRisk = "high";
+    else if (slotsRemaining <= 15 || ratio <= 0.25) seatRisk = "medium";
+    else seatRisk = "low";
+  }
+
+  const session =
+    String(record.session ?? "").trim() ||
+    (startHour < 12 ? "morning" : "afternoon");
+
+  return {
+    classId,
+    courseCode,
+    courseNameVi: String(record.courseNameVi ?? record["Tên_HP"] ?? record["Ten_HP"] ?? courseCode).trim(),
+    courseNameEn: String(record.courseNameEn ?? record["Tên_HP_Tiếng_Anh"] ?? record["Ten_HP_Tieng_Anh"] ?? courseCode).trim(),
+    credits: safeNum(record.credits, 0),
+    day: normalizeDay(record.day ?? record["Thứ"] ?? record["Thu"]),
+    startHour,
+    endHour,
+    room: String(record.room ?? record["Phòng"] ?? record["Phong"] ?? "").trim(),
+    enrolled,
+    capacity,
+    slotsRemaining,
+    session,
+    semester: String(record.semester ?? record["Kỳ"] ?? record["Ky"] ?? "20252").trim(),
+    seatRisk: (seatRisk === "high" || seatRisk === "medium" || seatRisk === "low" ? seatRisk : "medium") as "high" | "medium" | "low",
+  };
+}
+
+const normalizedCourses = (coursesData as GenericRecord[])
+  .map(normalizeCourse)
+  .filter((c): c is NonNullable<typeof c> => c !== null);
+
+const normalizedSchedule: NormalizedScheduleEntry[] = (scheduleData as GenericRecord[])
+  .map(normalizeScheduleEntry)
+  .filter((s): s is NonNullable<typeof s> => s !== null);
 
 // ── Tool 1: Get Student Profile ──
 
@@ -33,10 +147,10 @@ export const getStudentProfileTool = tool(
 
 export const searchCoursesTool = tool(
   async ({ query }: { query?: string }) => {
-    let results = coursesData;
+    let results = normalizedCourses;
     if (query) {
       const q = query.toLowerCase();
-      results = coursesData.filter(
+      results = normalizedCourses.filter(
         (c) =>
           c.code.toLowerCase().includes(q) ||
           c.nameVi.toLowerCase().includes(q) ||
@@ -73,19 +187,18 @@ export const searchCoursesTool = tool(
 
 export const checkScheduleTool = tool(
   async ({ course_codes }: { course_codes: string[] }) => {
-    const sections = scheduleData.filter((s) =>
+    const sections = normalizedSchedule.filter((s) =>
       course_codes.includes(s.courseCode)
     );
     const now = new Date().toLocaleString("vi-VN");
     const summary = sections.map((s) => {
-      const entry = s as ScheduleEntry & { slotsRemaining?: number };
-      const slotsRemaining = entry.slotsRemaining ?? (s.capacity - s.enrolled);
+      const slotsRemaining = s.slotsRemaining ?? (s.capacity - s.enrolled);
       return {
         classId: s.classId,
         courseCode: s.courseCode,
         name: s.courseNameVi,
         day: s.day,
-        time: `${s.startHour}:00–${s.endHour > Math.floor(s.endHour) ? Math.floor(s.endHour) + ":30" : s.endHour + ":00"}`,
+        time: normalizeTimeLabel(s.startHour, s.endHour),
         room: s.room,
         seats: `${s.enrolled}/${s.capacity}`,
         slotsRemaining,
@@ -129,7 +242,7 @@ export const checkPrerequisitesTool = tool(
   async ({ course_codes }: { course_codes: string[] }) => {
     const prereqs = prerequisitesData as Record<
       string,
-      { required: string[]; recommended: string[]; note: string }
+      { required?: string[]; recommended?: string[]; note?: string }
     >;
     const completed = studentData.completedCourses;
 
@@ -143,14 +256,16 @@ export const checkPrerequisitesTool = tool(
           recommended: [],
           note: "Không có dữ liệu tiên quyết",
         };
-      const missing = req.required.filter((r) => !completed.includes(r));
-      const recMissing = req.recommended.filter((r) => !completed.includes(r));
+      const required = Array.isArray(req.required) ? req.required : [];
+      const recommended = Array.isArray(req.recommended) ? req.recommended : [];
+      const missing = required.filter((r) => !completed.includes(r));
+      const recMissing = recommended.filter((r) => !completed.includes(r));
       return {
         course: code,
         ok: missing.length === 0,
         missing,
         recommendedMissing: recMissing,
-        note: req.note,
+        note: req.note ?? "",
       };
     });
 
@@ -201,15 +316,15 @@ export const generateScheduleTool = tool(
     avoid_afternoon?: boolean;
     prefer_group_friends?: boolean;
   }) => {
-    const sectionsByCourse: Record<string, ScheduleEntry[]> = {};
+    const sectionsByCourse: Record<string, NormalizedScheduleEntry[]> = {};
     for (const code of target_courses) {
-      let sections = scheduleData.filter((s) => s.courseCode === code);
+      let sections = normalizedSchedule.filter((s) => s.courseCode === code);
       if (avoid_morning) sections = sections.filter((s) => s.startHour >= 9.5);
       if (avoid_afternoon) sections = sections.filter((s) => s.startHour < 14);
       sectionsByCourse[code] = sections;
     }
 
-    function scorePlan(plan: ScheduleEntry[]): number {
+    function scorePlan(plan: NormalizedScheduleEntry[]): number {
       let score = 100;
       for (const s of plan) {
         const ratio = s.enrolled / s.capacity;
@@ -221,8 +336,8 @@ export const generateScheduleTool = tool(
       return score;
     }
 
-    function buildPlan(preferLowRisk: boolean): ScheduleEntry[] | null {
-      const plan: ScheduleEntry[] = [];
+    function buildPlan(preferLowRisk: boolean): NormalizedScheduleEntry[] | null {
+      const plan: NormalizedScheduleEntry[] = [];
       for (const code of target_courses) {
         let candidates = sectionsByCourse[code] || [];
         if (candidates.length === 0) continue;
@@ -256,7 +371,7 @@ export const generateScheduleTool = tool(
     const planA = buildPlan(true);
     const planB = buildPlan(false);
 
-    const formatPlan = (plan: ScheduleEntry[] | null) =>
+    const formatPlan = (plan: NormalizedScheduleEntry[] | null) =>
       plan?.map((s) => ({
         code: s.courseCode,
         name: s.courseNameVi,
@@ -334,10 +449,27 @@ export const getRecommendedCoursesTool = tool(
         ? (isSpring ? 4 : 3)
         : student.year * 2;
 
-    const curriculum = curriculumData as CurriculumEntry[];
-    const mandatory = curriculum.filter((c) => c.ky_hoc === semNum && c.bat_buoc === true);
-    const optional = curriculum.filter((c) => c.ky_hoc === semNum && c.bat_buoc === false);
-    const moduleChoice = curriculum.filter((c) => c.ky_hoc === semNum && c.bat_buoc === "chon_module");
+    const curriculum = (curriculumData as GenericRecord[])
+      .map((c) => ({
+        ma_hp: String(c.ma_hp ?? c.code ?? "").trim(),
+        ten_hp: String(c.ten_hp ?? c.nameVi ?? c.name ?? "").trim(),
+        ky_hoc: c.ky_hoc == null ? null : safeNum(c.ky_hoc, 0),
+        bat_buoc: c.bat_buoc,
+        tc_dt: safeNum(c.tc_dt ?? c.credits, 0),
+        ghi_chu_loai_hp: c.ghi_chu_loai_hp == null ? null : String(c.ghi_chu_loai_hp),
+      }))
+      .filter((c) => c.ma_hp.length > 0) as CurriculumEntry[];
+
+    const toRequirement = (v: CurriculumEntry["bat_buoc"]) => {
+      if (v === true || String(v).toLowerCase() === "true" || String(v) === "1") return "mandatory";
+      if (v === false || String(v).toLowerCase() === "false" || String(v) === "0") return "optional";
+      if (String(v).toLowerCase() === "chon_module") return "module";
+      return "optional";
+    };
+
+    const mandatory = curriculum.filter((c) => c.ky_hoc === semNum && toRequirement(c.bat_buoc) === "mandatory");
+    const optional = curriculum.filter((c) => c.ky_hoc === semNum && toRequirement(c.bat_buoc) === "optional");
+    const moduleChoice = curriculum.filter((c) => c.ky_hoc === semNum && toRequirement(c.bat_buoc) === "module");
 
     // Filter out already completed courses
     const completed = student.completedCourses;
