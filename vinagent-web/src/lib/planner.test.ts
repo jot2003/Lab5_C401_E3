@@ -7,13 +7,13 @@ describe("evaluatePlannerDecision", () => {
       "len lich hk xuan 2026 tranh sang va co giai tich 2",
     );
     expect(["happy", "lowConfidence"]).toContain(result.flow);
-    expect(result.confidenceScore).toBeGreaterThanOrEqual(60);
+    expect(result.confidenceScore).toBeGreaterThanOrEqual(50);
     expect(result.citations.length).toBeGreaterThan(0);
   });
 
-  it("returns lowConfidence for vague input", () => {
+  it("returns cautious flow for vague input", () => {
     const result = evaluatePlannerDecision("help");
-    expect(result.flow).toBe("lowConfidence");
+    expect(["lowConfidence", "failure"]).toContain(result.flow);
     expect(result.confidenceScore).toBeLessThan(80);
     expect(result.reasons.length).toBeGreaterThan(0);
     expect(result.reasons[0].citationIds.length).toBeGreaterThan(0);

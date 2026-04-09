@@ -6,8 +6,8 @@ import prerequisitesData from "../mock/prerequisites.json";
 import studentData from "../mock/student.json";
 import curriculumData from "../mock/curriculum-cttt.json";
 
-type ScheduleEntry = (typeof scheduleData)[number];
 type GenericRecord = Record<string, unknown>;
+type ScheduleEntry = GenericRecord;
 type NormalizedScheduleEntry = {
   classId: string;
   courseCode: string;
@@ -168,6 +168,7 @@ const searchableCourses = [...searchableCourseMap.values()].filter(
 );
 const courseByCode = new Map(searchableCourses.map((c) => [c.code, c]));
 const scheduleCourseCodeSet = new Set(normalizedSchedule.map((s) => s.courseCode));
+const curriculumCourseCodeSet = new Set(normalizedCurriculum.map((c) => c.ma_hp));
 
 const ROMAN_TO_ARABIC: Record<string, string> = {
   i: "1",
@@ -217,6 +218,77 @@ function aliasVariants(input: string): string[] {
   return [...variants];
 }
 
+function tokensIncluded(haystack: string, needle: string): boolean {
+  const hay = normalizeLooseText(haystack);
+  const ned = normalizeLooseText(needle);
+  if (!hay || !ned) return false;
+  const hayTokens = new Set(hay.split(" ").filter(Boolean));
+  const needTokens = ned.split(" ").filter(Boolean);
+  return needTokens.length > 0 && needTokens.every((t) => hayTokens.has(t));
+}
+
+const STOP_TOKENS = new Set([
+  "dai",
+  "cuong",
+  "clc",
+  "he",
+  "tin",
+  "chi",
+  "hoc",
+  "phan",
+  "co",
+  "so",
+  "nganh",
+  "module",
+]);
+
+function acronymFromTokens(tokens: string[]): string {
+  return tokens
+    .filter((t) => !STOP_TOKENS.has(t))
+    .map((t) => t[0])
+    .join("");
+}
+
+function shortNameVariants(input: string): string[] {
+  const base = normalizeLooseText(input);
+  if (!base) return [];
+  const tokens = base.split(" ").filter(Boolean);
+  const compact = tokens.join(" ");
+  const withoutStops = tokens.filter((t) => !STOP_TOKENS.has(t));
+  const out = new Set<string>([compact]);
+  if (withoutStops.length > 0) out.add(withoutStops.join(" "));
+  const acr = acronymFromTokens(tokens);
+  if (acr.length >= 2) out.add(acr);
+  return [...out];
+}
+
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let diag = i - 1;
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const saved = prev[j];
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diag + cost);
+      diag = saved;
+    }
+  }
+  return prev[b.length];
+}
+
+function similarity(a: string, b: string): number {
+  const aa = normalizeLooseText(a);
+  const bb = normalizeLooseText(b);
+  if (!aa || !bb) return 0;
+  if (aa === bb) return 1;
+  const dist = levenshtein(aa, bb);
+  return 1 - dist / Math.max(aa.length, bb.length);
+}
+
 const aliasToCodes = new Map<string, string[]>();
 function addAlias(alias: string, code: string) {
   if (!alias) return;
@@ -228,16 +300,33 @@ for (const c of searchableCourses) {
   addAlias(normalizeLooseText(c.code), c.code);
   for (const v of aliasVariants(c.nameVi)) addAlias(v, c.code);
   for (const v of aliasVariants(c.nameEn)) addAlias(v, c.code);
+  for (const v of shortNameVariants(c.nameVi)) addAlias(v, c.code);
+  for (const v of shortNameVariants(c.nameEn)) addAlias(v, c.code);
+}
+
+const codeAliasSignatures = new Map<string, string[]>();
+for (const c of searchableCourses) {
+  const aliases = new Set<string>();
+  aliases.add(normalizeLooseText(c.code));
+  for (const v of aliasVariants(c.nameVi)) aliases.add(v);
+  for (const v of aliasVariants(c.nameEn)) aliases.add(v);
+  for (const v of shortNameVariants(c.nameVi)) aliases.add(v);
+  for (const v of shortNameVariants(c.nameEn)) aliases.add(v);
+  codeAliasSignatures.set(c.code, [...aliases].filter(Boolean));
 }
 
 function resolveCourseCodes(inputs: string[]): {
   resolved: string[];
   unresolved: string[];
   inputToCode: Record<string, string>;
+  ambiguous: Record<string, string[]>;
 } {
   const resolved = new Set<string>();
   const unresolved: string[] = [];
   const inputToCode: Record<string, string> = {};
+  const ambiguous: Record<string, string[]> = {};
+  const fuzzyThreshold = 0.86;
+  const fuzzyAmbiguousGap = 0.04;
 
   for (const raw of inputs) {
     const key = String(raw ?? "").trim();
@@ -253,6 +342,39 @@ function resolveCourseCodes(inputs: string[]): {
         for (const c of aliasToCodes.get(v) ?? []) byAlias.add(c);
       }
       candidates = [...byAlias];
+      if (candidates.length === 0) {
+        for (const course of searchableCourses) {
+          if (
+            tokensIncluded(course.nameVi, key) ||
+            tokensIncluded(course.nameEn, key) ||
+            tokensIncluded(course.code, key)
+          ) {
+            candidates.push(course.code);
+          }
+        }
+      }
+    }
+
+    if (candidates.length === 0) {
+      const scored = searchableCourses
+        .map((course) => {
+          const aliases = codeAliasSignatures.get(course.code) ?? [];
+          let best = 0;
+          for (const v of aliasVariants(key)) {
+            for (const alias of aliases) {
+              const s = similarity(v, alias);
+              if (s > best) best = s;
+            }
+          }
+          return { code: course.code, score: best };
+        })
+        .filter((x) => x.score >= fuzzyThreshold)
+        .sort((a, b) => b.score - a.score);
+      candidates = scored.map((x) => x.code);
+
+      if (scored.length > 1 && scored[0].score - scored[1].score < fuzzyAmbiguousGap) {
+        ambiguous[key] = scored.slice(0, 3).map((x) => x.code);
+      }
     }
 
     if (candidates.length === 0) {
@@ -264,8 +386,8 @@ function resolveCourseCodes(inputs: string[]): {
       const aSched = scheduleCourseCodeSet.has(a) ? 1 : 0;
       const bSched = scheduleCourseCodeSet.has(b) ? 1 : 0;
       if (aSched !== bSched) return bSched - aSched;
-      const aCurr = normalizedCurriculum.some((c) => c.ma_hp === a) ? 1 : 0;
-      const bCurr = normalizedCurriculum.some((c) => c.ma_hp === b) ? 1 : 0;
+      const aCurr = curriculumCourseCodeSet.has(a) ? 1 : 0;
+      const bCurr = curriculumCourseCodeSet.has(b) ? 1 : 0;
       if (aCurr !== bCurr) return bCurr - aCurr;
       return a.localeCompare(b);
     });
@@ -275,7 +397,26 @@ function resolveCourseCodes(inputs: string[]): {
     inputToCode[key] = chosen;
   }
 
-  return { resolved: [...resolved], unresolved, inputToCode };
+  return { resolved: [...resolved], unresolved, inputToCode, ambiguous };
+}
+
+function findScheduleFallbackCodes(code: string): string[] {
+  if (scheduleCourseCodeSet.has(code)) return [code];
+  const course = courseByCode.get(code);
+  if (!course) return [];
+  const candidates = new Set<string>();
+  const aliasPool = new Set<string>([
+    ...aliasVariants(course.nameVi),
+    ...aliasVariants(course.nameEn),
+    ...shortNameVariants(course.nameVi),
+    ...shortNameVariants(course.nameEn),
+  ]);
+  for (const alias of aliasPool) {
+    for (const c of aliasToCodes.get(alias) ?? []) {
+      if (scheduleCourseCodeSet.has(c)) candidates.add(c);
+    }
+  }
+  return [...candidates];
 }
 
 const STUDENT_PROFILE_CACHE_TTL_MS = 10 * 60 * 1000;
@@ -323,6 +464,8 @@ export const searchCoursesTool = tool(
           normalizeLooseText(c.code).includes(q) ||
           normalizeLooseText(c.nameVi).includes(q) ||
           normalizeLooseText(c.nameEn).includes(q) ||
+          tokensIncluded(c.nameVi, q) ||
+          tokensIncluded(c.nameEn, q) ||
           resolved.includes(c.code)
       );
     }
@@ -357,7 +500,14 @@ export const searchCoursesTool = tool(
 export const checkScheduleTool = tool(
   async ({ course_codes }: { course_codes: string[] }) => {
     const resolved = resolveCourseCodes(course_codes);
-    const codes = resolved.resolved;
+    const fallbackMap: Record<string, string[]> = {};
+    const codes = [...new Set(resolved.resolved.flatMap((code) => {
+      const fallbacks = findScheduleFallbackCodes(code);
+      if (!scheduleCourseCodeSet.has(code) && fallbacks.length > 0) {
+        fallbackMap[code] = fallbacks;
+      }
+      return fallbacks.length > 0 ? fallbacks : [code];
+    }))];
     const sections = normalizedSchedule.filter((s) =>
       codes.includes(s.courseCode)
     );
@@ -385,11 +535,13 @@ export const checkScheduleTool = tool(
       total: summary.length,
       highRiskCount: highRisk.length,
       criticalSlotsCount: criticalSlots.length,
+      ambiguousInputs: resolved.ambiguous,
+      fallbackMap,
       timestamp: now,
       _citation: {
         type: "sis",
         title: `Dữ liệu chỗ ngồi HK 20252 — dk-sis (${now})`,
-        detail: `${summary.length} lớp cho ${codes.join(", ")}.${resolved.unresolved.length > 0 ? ` Không map được: ${resolved.unresolved.join(", ")}.` : ""} ${highRisk.length > 0 ? `⚠ ${highRisk.length} lớp nguy cơ hết chỗ.` : "Tất cả còn chỗ."} ${criticalSlots.length > 0 ? `${criticalSlots.length} lớp còn dưới 5 chỗ!` : ""} Cập nhật: ${now}.`,
+        detail: `${summary.length} lớp cho ${codes.join(", ")}.${Object.keys(fallbackMap).length > 0 ? ` Đã dùng mã tương đương có lịch mở: ${Object.entries(fallbackMap).map(([k, v]) => `${k} -> ${v.join("/")}`).join("; ")}.` : ""}${resolved.unresolved.length > 0 ? ` Không map được: ${resolved.unresolved.join(", ")}.` : ""}${Object.keys(resolved.ambiguous).length > 0 ? ` Có đầu vào mơ hồ: ${Object.entries(resolved.ambiguous).map(([k, v]) => `${k} -> ${v.join("/")}`).join("; ")}.` : ""} ${highRisk.length > 0 ? `⚠ ${highRisk.length} lớp nguy cơ hết chỗ.` : "Tất cả còn chỗ."} ${criticalSlots.length > 0 ? `${criticalSlots.length} lớp còn dưới 5 chỗ!` : ""} Cập nhật: ${now}.`,
       },
     });
   },
@@ -448,13 +600,14 @@ export const checkPrerequisitesTool = tool(
       allOk,
       results,
       unresolved: resolved.unresolved,
+      ambiguous: resolved.ambiguous,
       studentCompleted: completed,
       _citation: {
         type: "prerequisite",
         title: "Kiểm tra điều kiện tiên quyết — HUST dk-sis",
         detail: allOk
-          ? `Sinh viên đã hoàn thành: ${completed.join(", ")}. Tất cả điều kiện tiên quyết cho ${resolved.resolved.join(", ")} đều đáp ứng.${resolved.unresolved.length > 0 ? ` Không map được: ${resolved.unresolved.join(", ")}.` : ""}`
-          : `Thiếu tiên quyết: ${failedCourses.map((f) => `${f.course} (cần: ${f.missing.join(", ")})`).join("; ")}.${resolved.unresolved.length > 0 ? ` Không map được: ${resolved.unresolved.join(", ")}.` : ""}`,
+          ? `Sinh viên đã hoàn thành: ${completed.join(", ")}. Tất cả điều kiện tiên quyết cho ${resolved.resolved.join(", ")} đều đáp ứng.${resolved.unresolved.length > 0 ? ` Không map được: ${resolved.unresolved.join(", ")}.` : ""}${Object.keys(resolved.ambiguous).length > 0 ? ` Có đầu vào mơ hồ cần xác nhận.` : ""}`
+          : `Thiếu tiên quyết: ${failedCourses.map((f) => `${f.course} (cần: ${f.missing.join(", ")})`).join("; ")}.${resolved.unresolved.length > 0 ? ` Không map được: ${resolved.unresolved.join(", ")}.` : ""}${Object.keys(resolved.ambiguous).length > 0 ? ` Có đầu vào mơ hồ cần xác nhận.` : ""}`,
       },
     });
   },
@@ -472,7 +625,7 @@ export const checkPrerequisitesTool = tool(
 
 // ── Tool 5: Generate Schedule ──
 
-function hasTimeConflict(a: ScheduleEntry, b: ScheduleEntry): boolean {
+function hasTimeConflict(a: NormalizedScheduleEntry, b: NormalizedScheduleEntry): boolean {
   if (a.day !== b.day) return false;
   return a.startHour < b.endHour && b.startHour < a.endHour;
 }
@@ -490,7 +643,14 @@ export const generateScheduleTool = tool(
     prefer_group_friends?: boolean;
   }) => {
     const resolved = resolveCourseCodes(target_courses);
-    const resolvedTargets = resolved.resolved;
+    const fallbackMap: Record<string, string[]> = {};
+    const resolvedTargets = [...new Set(resolved.resolved.flatMap((code) => {
+      const fallbacks = findScheduleFallbackCodes(code);
+      if (!scheduleCourseCodeSet.has(code) && fallbacks.length > 0) {
+        fallbackMap[code] = fallbacks;
+      }
+      return fallbacks.length > 0 ? fallbacks : [code];
+    }))];
     const sectionsByCourse: Record<string, NormalizedScheduleEntry[]> = {};
     for (const code of resolvedTargets) {
       let sections = normalizedSchedule.filter((s) => s.courseCode === code);
@@ -570,11 +730,13 @@ export const generateScheduleTool = tool(
       targetCourses: resolvedTargets,
       unresolvedTargets: resolved.unresolved,
       inputToCode: resolved.inputToCode,
+      ambiguousTargets: resolved.ambiguous,
+      fallbackMap,
       constraints: { avoid_morning, avoid_afternoon, prefer_group_friends },
       _citation: {
         type: "sis",
         title: "Thuật toán xếp lịch — BKAgent Scheduler",
-        detail: `Đã tạo ${planA ? "Plan A" : ""}${planA && planB ? " + " : ""}${planB ? "Plan B" : ""} cho ${resolvedTargets.join(", ")}.${resolved.unresolved.length > 0 ? ` Không map được: ${resolved.unresolved.join(", ")}.` : ""} Dữ liệu: TKB20252-FULL, ${scheduleData.length} lớp.`,
+        detail: `Đã tạo ${planA ? "Plan A" : ""}${planA && planB ? " + " : ""}${planB ? "Plan B" : ""} cho ${resolvedTargets.join(", ")}.${Object.keys(fallbackMap).length > 0 ? ` Dùng mã tương đương có lịch mở: ${Object.entries(fallbackMap as Record<string, string[]>).map(([k, v]) => `${k} -> ${v.join("/")}`).join("; ")}.` : ""}${resolved.unresolved.length > 0 ? ` Không map được: ${resolved.unresolved.join(", ")}.` : ""}${Object.keys(resolved.ambiguous).length > 0 ? ` Có đầu vào mơ hồ cần xác nhận.` : ""} Dữ liệu: TKB20252-FULL, ${normalizedSchedule.length} lớp.`,
       },
     });
   },
