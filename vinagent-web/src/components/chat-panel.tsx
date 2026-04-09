@@ -23,12 +23,14 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
   const [typingDone, setTypingDone] = useState(false);
 
   function highlightImportant(text: string) {
-    const redTerms = /(\bPlan B\b|rủi ro|thất bại|cảnh báo|Rủi ro|Thất bại|Cảnh báo)/g;
-    const blueTerms = /(\bPlan A\b|thành công|Thành công|Độ tin cậy|độ tin cậy|đã tạo|Đã tạo|Đã xác nhận|đã xác nhận)/g;
+    const dangerTerms = /(\bPlan B\b|rủi ro|thất bại|cảnh báo|Rủi ro|Thất bại|Cảnh báo)/g;
+    const successTerms = /(\bPlan A\b|thành công|Thành công|đã tạo|Đã tạo|Đã xác nhận|đã xác nhận)/g;
+    const infoTerms = /(Độ tin cậy|độ tin cậy)/g;
 
-    return text.split(/(\bPlan [AB]\b|rủi ro|thất bại|cảnh báo|Rủi ro|Thất bại|Cảnh báo|thành công|Thành công|Độ tin cậy|độ tin cậy|đã tạo|Đã tạo|Đã xác nhận|đã xác nhận)/g).map((part, i) => {
-      if (redTerms.test(part)) return <span key={i} className="font-semibold text-[#C72127]">{part}</span>;
-      if (blueTerms.test(part)) return <span key={i} className="font-semibold text-[#134D8B]">{part}</span>;
+    return text.split(/(\bPlan [AB]\b|rủi ro|thất bại|cảnh báo|Rủi ro|Thất bại|Cảnh báo|thành công|Thành công|đã tạo|Đã tạo|Đã xác nhận|đã xác nhận|Độ tin cậy|độ tin cậy)/g).map((part, i) => {
+      if (dangerTerms.test(part)) return <span key={i} className="font-bold text-danger">{part}</span>;
+      if (successTerms.test(part)) return <span key={i} className="font-bold text-primary">{part}</span>;
+      if (infoTerms.test(part)) return <span key={i} className="font-semibold text-primary">{part}</span>;
       return <span key={i}>{part}</span>;
     });
   }
@@ -50,18 +52,18 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
   return (
     <div className={cn("flex gap-2.5", isUser ? "flex-row-reverse" : "flex-row")}>
       {!isUser && (
-        <Avatar className="size-7 shrink-0">
-          <AvatarFallback className="bg-foreground text-background text-[10px] font-bold">
+        <Avatar className="size-8 shrink-0">
+          <AvatarFallback className="bg-primary text-white text-[11px] font-bold">
             BK
           </AvatarFallback>
         </Avatar>
       )}
       <div
         className={cn(
-          "max-w-[85%] rounded-lg px-3 py-2.5 text-sm leading-relaxed whitespace-pre-line",
+          "max-w-[85%] rounded-lg px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-line",
           isUser
-            ? "bg-[#134D8B] dark:bg-zinc-800 text-white border-0 rounded-tr-sm"
-            : "border border-border/50 rounded-tl-sm",
+            ? "bg-primary text-white border-0 rounded-tr-sm font-medium"
+            : "border border-border bg-white shadow-sm rounded-tl-sm",
         )}
       >
         {!isUser && isLatest && !typingDone ? (
@@ -93,22 +95,22 @@ export function ChatPanel() {
         <div className="px-4 py-4 space-y-3">
           {isEmpty && (
             <div className="flex h-full min-h-[60vh] flex-col items-center justify-center text-center">
-              <Avatar className="size-10 mb-3">
-                <AvatarFallback className="bg-foreground text-background text-sm font-bold">
+              <Avatar className="size-12 mb-4">
+                <AvatarFallback className="bg-primary text-white text-base font-bold">
                   BK
                 </AvatarFallback>
               </Avatar>
-              <h3 className="text-sm font-medium leading-normal">Xin chào! Mình là BKAgent</h3>
-              <p className="mt-1 max-w-xs text-xs text-muted-foreground leading-relaxed">
+              <h3 className="text-base font-bold text-primary leading-normal">Xin chào! Mình là BKAgent</h3>
+              <p className="mt-1.5 max-w-xs text-sm text-muted-foreground leading-relaxed">
                 Mô tả yêu cầu đăng ký học phần bằng ngôn ngữ tự nhiên, mình sẽ tạo kế hoạch tối ưu cho bạn.
               </p>
-              <div className="mt-4 flex flex-col gap-1.5 w-full max-w-xs">
+              <div className="mt-5 flex flex-col gap-2 w-full max-w-xs">
                 {SUGGESTIONS.map((s) => (
                   <Button
                     key={s}
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="h-auto justify-start whitespace-normal text-left text-xs text-muted-foreground px-3 py-2 leading-relaxed"
+                    className="h-auto justify-start whitespace-normal text-left text-sm px-3.5 py-2.5 leading-relaxed border-primary/30 text-primary hover:bg-primary hover:text-white transition-colors"
                     onClick={() => { setPrompt(s); generate(s); }}
                   >
                     {s}
@@ -124,35 +126,35 @@ export function ChatPanel() {
 
           {isTyping && (
             <div className="flex gap-2.5">
-              <Avatar className="size-7 shrink-0">
-                <AvatarFallback className="bg-foreground text-background text-[10px] font-bold">
+              <Avatar className="size-8 shrink-0">
+                <AvatarFallback className="bg-primary text-white text-[11px] font-bold">
                   BK
                 </AvatarFallback>
               </Avatar>
-              <div className="rounded-lg rounded-tl-sm border border-border/50 px-3 py-2.5">
+              <div className="rounded-lg rounded-tl-sm border border-border bg-white shadow-sm px-3 py-2.5">
                 <span className="flex gap-1">
-                  <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="size-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "300ms" }} />
+                  <span className="size-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="size-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="size-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
                 </span>
               </div>
             </div>
           )}
 
           {(flow === "lowConfidence" || flow === "idle") && messages.length > 0 && !isTyping && (
-            <div className="flex gap-1.5 pl-9">
+            <div className="flex gap-2 pl-10">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="text-xs text-muted-foreground"
+                className="text-sm border-primary/30 text-primary hover:bg-primary hover:text-white transition-colors"
                 onClick={() => clarify("avoidMorning")}
               >
                 Tránh lịch sáng
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="text-xs text-muted-foreground"
+                className="text-sm border-primary/30 text-primary hover:bg-primary hover:text-white transition-colors"
                 onClick={() => clarify("keepGroup")}
               >
                 Giữ lớp cùng nhóm
@@ -173,11 +175,12 @@ export function ChatPanel() {
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Nhập yêu cầu đăng ký học phần..."
             disabled={isTyping}
-            className="flex-1 bg-transparent"
+            className="flex-1 bg-white text-sm h-10 border-border focus-visible:ring-primary/50"
           />
           <Button
             type="submit"
             size="default"
+            className="h-10 px-4 bg-primary hover:bg-primary/85 text-white"
             disabled={!prompt.trim() || isTyping}
           >
             <Send className="size-4" />

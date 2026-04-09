@@ -31,32 +31,32 @@ export default function Home() {
     <div className="flex min-h-[calc(100vh-1px)] flex-col items-center justify-center px-4 py-12">
       <FadeIn>
         <div className="flex flex-col items-center text-center">
-          <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold mb-4">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-white text-xl font-bold mb-5 shadow-lg shadow-primary/30">
             BK
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight leading-tight text-primary dark:text-white">
+          <h1 className="text-3xl font-bold tracking-tight leading-tight text-primary">
             Cố vấn học vụ thông minh
           </h1>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-3 max-w-md text-base leading-relaxed text-muted-foreground">
             Tối ưu đăng ký học phần bằng ngôn ngữ tự nhiên.
             Mọi đề xuất đều có trích dẫn nguồn và có thể kiểm chứng.
           </p>
         </div>
       </FadeIn>
 
-      <Stagger className="mt-8 grid w-full max-w-xl gap-3 md:grid-cols-3">
+      <Stagger className="mt-8 grid w-full max-w-xl gap-4 md:grid-cols-3">
         {STEPS.map((s) => (
           <StaggerItem key={s.step}>
-            <Card className="border-border/50 bg-primary/5 hover:border-border transition-colors">
-              <CardContent className="flex flex-col items-center p-4 text-center">
-                <div className="flex size-9 items-center justify-center rounded-md bg-primary">
-                  <s.icon className="size-4 text-primary-foreground" />
+            <Card className="border-primary/20 bg-white shadow-md hover:shadow-lg hover:border-primary/50 transition-all">
+              <CardContent className="flex flex-col items-center p-5 text-center">
+                <div className="flex size-11 items-center justify-center rounded-xl bg-primary shadow-sm shadow-primary/30">
+                  <s.icon className="size-5 text-white" />
                 </div>
-                <span className="mt-3 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                <span className="mt-3 flex size-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
                   {s.step}
                 </span>
-                <h3 className="mt-2 text-sm font-semibold leading-normal text-primary dark:text-white">{s.title}</h3>
-                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                <h3 className="mt-2 text-sm font-bold leading-normal text-primary">{s.title}</h3>
+                <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
                   {s.description}
                 </p>
               </CardContent>
@@ -68,10 +68,10 @@ export default function Home() {
       <FadeIn delay={0.2}>
         <Link
           href="/tao-ke-hoach"
-          className="mt-8 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+          className="mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-base font-bold text-white shadow-lg shadow-primary/30 transition-all hover:bg-primary/85 hover:shadow-xl hover:scale-105"
         >
           Bắt đầu tạo lịch học
-          <ArrowRight className="size-4" />
+          <ArrowRight className="size-5" />
         </Link>
       </FadeIn>
     </div>

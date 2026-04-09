@@ -11,14 +11,14 @@
   --secondary-color: var(--gold-color);
   --accent-color: var(--gold-color);
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.98 0.003 23);
+  --foreground: oklch(0.13 0 0);
 
-  --card: oklch(0.98 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.13 0 0);
 
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.13 0 0);
 
   --primary: var(--primary-color);
   --primary-foreground: oklch(1 0 0);
@@ -26,8 +26,8 @@
   --secondary: var(--secondary-color);
   --secondary-foreground: oklch(1 0 0);
 
-  --muted: oklch(0.75 0 0);
-  --muted-foreground: oklch(0.45 0 0);
+  --muted: oklch(0.93 0.003 23);
+  --muted-foreground: oklch(0.42 0 0);
 
   --accent: var(--accent-color);
   --accent-foreground: oklch(1 0 0);
@@ -35,8 +35,8 @@
   --destructive: oklch(0.55 0.2 25);
   --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.145 0 0 / 15%);
-  --input: oklch(0.145 0 0 / 8%);
+  --border: oklch(0.145 0 0 / 20%);
+  --input: oklch(0.145 0 0 / 10%);
   --ring: var(--primary-color);
 
   --success: oklch(0.55 0.15 145);
@@ -47,14 +47,14 @@
   --trust-mid: var(--warning);
   --trust-low: var(--danger);
 
-  --sidebar: oklch(0.25 0.07 23);
+  --sidebar: var(--primary-color);
   --sidebar-foreground: oklch(1 0 0);
-  --sidebar-primary: var(--gold-color);
-  --sidebar-primary-foreground: oklch(0.15 0 0);
-  --sidebar-accent: oklch(0.35 0.08 23);
+  --sidebar-primary: oklch(1 0 0);
+  --sidebar-primary-foreground: var(--primary-color);
+  --sidebar-accent: oklch(1 0 0 / 15%);
   --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0 0 0 / 8%);
-  --sidebar-ring: var(--primary-color);
+  --sidebar-border: oklch(1 0 0 / 15%);
+  --sidebar-ring: var(--gold-color);
 
   --chart-1: var(--primary-color);
   --chart-2: var(--gold-color);
@@ -62,7 +62,7 @@
   --chart-4: oklch(0.35 0 0);
   --chart-5: oklch(0.25 0 0);
 
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 }
 
 .dark {
@@ -167,5 +167,9 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 15px;
+  }
+  h1, h2, h3 {
+    @apply font-bold text-primary;
   }
 }

@@ -37,15 +37,15 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader className="p-3">
-        <Link href="/" className="flex items-center gap-2 px-1">
+        <Link href="/" className="flex items-center gap-2.5 px-1">
           <Image
             src="/hust-logo.svg"
             alt="HUST"
-            width={28}
+            width={19}
             height={28}
             className="shrink-0"
           />
-          <span className="text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
+          <span className="text-base font-bold tracking-tight text-white group-data-[collapsible=icon]:hidden">
             BKAgent
           </span>
         </Link>
@@ -76,10 +76,10 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <div className="border-t border-sidebar-border p-3">
+      <div className="border-t border-white/20 p-3">
         {mounted && (
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-sidebar-foreground/70 group-data-[collapsible=icon]:hidden">Dark</span>
+            <span className="text-xs font-medium text-white/80 group-data-[collapsible=icon]:hidden">Dark</span>
             <Switch
               checked={theme === "dark"}
               onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}

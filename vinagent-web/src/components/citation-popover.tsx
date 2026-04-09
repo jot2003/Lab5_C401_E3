@@ -1,7 +1,7 @@
 "use client";
 
 import type { Citation } from "@/lib/citations";
-import { getCitationLabel, getCitationColor } from "@/lib/citations";
+import { getCitationLabel } from "@/lib/citations";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,7 +19,7 @@ export function CitationRef({
 }) {
   if (!citation) {
     return (
-      <span className="inline-flex size-4 items-center justify-center rounded bg-secondary px-1 text-[10px] font-bold text-muted-foreground align-super">
+      <span className="inline-flex size-4 items-center justify-center rounded bg-primary px-1 text-[10px] font-bold text-white align-super ml-0.5">
         {id}
       </span>
     );
@@ -28,7 +28,7 @@ export function CitationRef({
   return (
     <Popover>
       <PopoverTrigger
-        className="inline-flex h-4 min-w-4 items-center justify-center rounded bg-secondary px-1 text-[10px] font-bold text-foreground transition-colors hover:bg-accent align-super"
+        className="inline-flex h-4 min-w-4 items-center justify-center rounded bg-primary px-1 text-[10px] font-bold text-white transition-colors hover:bg-primary/80 align-super ml-0.5"
       >
         {id}
       </PopoverTrigger>
@@ -36,7 +36,7 @@ export function CitationRef({
         <div className="mb-2 flex items-center gap-2">
           <Badge
             variant="outline"
-            className={cn("text-[10px] leading-normal", getCitationColor(citation.type))}
+            className={cn("text-[10px] leading-normal border-primary/30 text-primary font-semibold")}
           >
             {getCitationLabel(citation.type)}
           </Badge>
@@ -44,7 +44,7 @@ export function CitationRef({
             {citation.timestamp}
           </span>
         </div>
-        <p className="text-xs font-medium leading-normal">{citation.title}</p>
+        <p className="text-sm font-bold text-primary leading-normal">{citation.title}</p>
         <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
           {citation.detail}
         </p>
@@ -57,22 +57,22 @@ export function CitationList({ citations }: { citations: Citation[] }) {
   if (citations.length === 0) return null;
   return (
     <div className="space-y-2">
-      <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <h4 className="text-sm font-bold text-primary uppercase tracking-wide">
         Nguồn tham khảo
       </h4>
       {citations.map((c) => (
         <div
           key={c.id}
-          className="flex items-start gap-2 rounded-lg border border-border/50 bg-card p-3"
+          className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3"
         >
-          <span className="flex size-5 shrink-0 items-center justify-center rounded bg-secondary text-[10px] font-bold text-foreground">
+          <span className="flex size-6 shrink-0 items-center justify-center rounded bg-primary text-[11px] font-bold text-white">
             {c.id}
           </span>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-1">
               <Badge
                 variant="outline"
-                className={cn("text-[9px] leading-normal", getCitationColor(c.type))}
+                className="text-[10px] leading-normal border-primary/30 text-primary font-semibold"
               >
                 {getCitationLabel(c.type)}
               </Badge>
@@ -80,8 +80,8 @@ export function CitationList({ citations }: { citations: Citation[] }) {
                 {c.timestamp}
               </span>
             </div>
-            <p className="mt-1 text-xs font-medium leading-normal">{c.title}</p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
+            <p className="text-sm font-bold text-primary leading-normal">{c.title}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
               {c.detail}
             </p>
           </div>

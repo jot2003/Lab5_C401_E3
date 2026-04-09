@@ -27,19 +27,20 @@ function ConfidenceBar({ score }: { score: number }) {
     : score >= 60
       ? "[&>div]:bg-warning"
       : "[&>div]:bg-danger";
+  const borderClass = score >= 80 ? "border-success/30" : score >= 60 ? "border-warning/30" : "border-danger/30";
 
   return (
-    <Card className="border-border/50 bg-card">
+    <Card className={cn("border bg-white shadow-sm", borderClass)}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-muted-foreground">Độ tin cậy</span>
-          <span className="font-mono text-lg font-semibold">
+          <span className="text-sm font-bold text-primary">Độ tin cậy</span>
+          <span className="font-mono text-2xl font-bold text-foreground">
             {score}
-            <span className="text-xs text-muted-foreground font-normal">/100</span>
+            <span className="text-sm text-muted-foreground font-normal">/100</span>
           </span>
         </div>
-        <Progress value={score} className={cn("h-1.5", indicatorClass)} />
-        <p className="mt-1.5 text-[11px] text-muted-foreground leading-normal">{label}</p>
+        <Progress value={score} className={cn("h-2", indicatorClass)} />
+        <p className="mt-1.5 text-xs font-medium text-muted-foreground leading-normal">{label}</p>
       </CardContent>
     </Card>
   );
@@ -77,18 +78,18 @@ function RedFlagBanner({ flags, onAcknowledge }: { flags: string[]; onAcknowledg
 
 function PlanListView({ courses, plan }: { courses: { code: string; name: string; day: string; startHour: number; endHour: number; room?: string }[]; plan: "A" | "B" }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {courses.map((c, idx) => (
-        <div key={`${plan}-${c.code}-${c.day}-${idx}`} className="flex items-center gap-3 rounded-lg border border-border/50 bg-card p-3">
+        <div key={`${plan}-${c.code}-${c.day}-${idx}`} className="flex items-center gap-3 rounded-lg border border-border bg-white shadow-sm p-3">
           <span className={cn(
-            "flex size-7 shrink-0 items-center justify-center rounded-md text-[10px] font-bold",
-            plan === "A" ? "bg-foreground text-background" : "bg-secondary text-foreground",
+            "flex size-8 shrink-0 items-center justify-center rounded-md text-xs font-bold",
+            plan === "A" ? "bg-primary text-white" : "bg-gold text-foreground",
           )}>
             {c.code.slice(-3)}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium leading-normal">{c.code} — {c.name}</p>
-            <p className="text-[11px] text-muted-foreground leading-normal">
+            <p className="text-sm font-bold text-primary leading-normal">{c.code} — {c.name}</p>
+            <p className="text-xs text-muted-foreground leading-normal">
               {c.day} {c.startHour}:00–{c.endHour > Math.floor(c.endHour) ? `${Math.floor(c.endHour)}:30` : `${c.endHour}:00`} · {c.room}
             </p>
           </div>
@@ -103,24 +104,24 @@ function ReasoningPanel({ reasons, citations }: { reasons: { text: string; citat
   if (reasons.length === 0) return null;
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-1 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-        <span className="font-medium">Lý luận AI ({reasons.length} bước)</span>
-        {open ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+      <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm font-bold text-primary hover:bg-primary/10 transition-colors">
+        <span>Lý luận AI ({reasons.length} bước)</span>
+        {open ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="mt-1 space-y-2 rounded-md border border-border/40 bg-muted/30 p-3">
+        <div className="mt-1 space-y-2.5 rounded-md border border-primary/20 bg-primary/5 p-3">
           {reasons.map((r, i) => {
             const cit = citations.find((c) => r.citationIds.includes(c.id));
             return (
-              <div key={i} className="flex gap-2">
-                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
+              <div key={i} className="flex gap-2.5">
+                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
                   {i + 1}
                 </span>
-                <p className="text-xs leading-relaxed text-muted-foreground">
+                <p className="text-sm leading-relaxed text-foreground">
                   {r.text}
                   {cit && (
-                    <span className="ml-1 rounded-sm bg-primary/10 px-1 py-0.5 text-[10px] font-medium text-primary">
-                      [{cit.title}]
+                    <span className="ml-1 rounded-sm bg-primary px-1.5 py-0.5 text-xs font-bold text-white">
+                      {cit.title}
                     </span>
                   )}
                 </p>
@@ -212,22 +213,22 @@ export function ResultPanel() {
               />
             ) : (
               <div className="space-y-4">
-                {store.planACourses.length > 0 && (
-                  <div>
-                    <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Plan A — Tối ưu
-                    </h4>
-                    <PlanListView courses={store.planACourses} plan="A" />
-                  </div>
-                )}
-                {store.planBCourses.length > 0 && (store.usePlanB || store.flow === "failure" || store.flow === "recovery") && (
-                  <div>
-                    <h4 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Plan B — Dự phòng
-                    </h4>
-                    <PlanListView courses={store.planBCourses} plan="B" />
-                  </div>
-                )}
+              {store.planACourses.length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-sm font-bold text-primary uppercase tracking-wide">
+                    Plan A — Tối ưu
+                  </h4>
+                  <PlanListView courses={store.planACourses} plan="A" />
+                </div>
+              )}
+              {store.planBCourses.length > 0 && (store.usePlanB || store.flow === "failure" || store.flow === "recovery") && (
+                <div>
+                  <h4 className="mb-2 text-sm font-bold text-primary uppercase tracking-wide">
+                    Plan B — Dự phòng
+                  </h4>
+                  <PlanListView courses={store.planBCourses} plan="B" />
+                </div>
+              )}
               </div>
             )}
 
