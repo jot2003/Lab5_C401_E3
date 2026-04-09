@@ -34,7 +34,7 @@ export default function Home() {
           <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold mb-4">
             VA
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight leading-tight text-[#134D8B] dark:text-white">
+          <h1 className="text-2xl font-semibold tracking-tight leading-tight text-[#B72025] dark:text-white">
             Cố vấn học vụ thông minh
           </h1>
           <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
@@ -47,15 +47,15 @@ export default function Home() {
       <Stagger className="mt-8 grid w-full max-w-xl gap-3 md:grid-cols-3">
         {STEPS.map((s) => (
           <StaggerItem key={s.step}>
-            <Card className="border-border/50 bg-blue-50 dark:bg-zinc-900 hover:border-border transition-colors">
+            <Card className="border-border/50 bg-[#B72025]/5 dark:bg-zinc-900 hover:border-border transition-colors">
               <CardContent className="flex flex-col items-center p-4 text-center">
-                <div className="flex size-9 items-center justify-center rounded-md bg-[#134D8B] dark:bg-zinc-700">
+                <div className="flex size-9 items-center justify-center rounded-md bg-[#B72025] dark:bg-zinc-700">
                   <s.icon className="size-4 text-white" />
                 </div>
-                <span className="mt-3 flex size-5 items-center justify-center rounded-full bg-[#134D8B] text-[10px] font-bold text-white">
+                <span className="mt-3 flex size-5 items-center justify-center rounded-full bg-[#B72025] dark:bg-white text-[10px] font-bold text-white dark:text-black">
                   {s.step}
                 </span>
-                <h3 className="mt-2 text-sm font-semibold leading-normal text-[#134D8B] dark:text-white">{s.title}</h3>
+                <h3 className="mt-2 text-sm font-semibold leading-normal text-[#B72025] dark:text-white">{s.title}</h3>
                 <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
                   {s.description}
                 </p>

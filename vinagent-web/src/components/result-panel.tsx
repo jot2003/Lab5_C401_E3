@@ -12,7 +12,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
 function ConfidenceBar({ score }: { score: number }) {
@@ -118,11 +117,11 @@ export function ResultPanel() {
     <div className="flex h-full flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-border/50 px-4 py-2.5">
         <Tabs value={store.currentView} onValueChange={(v) => store.setCurrentView(v as "calendar" | "list")}>
-          <TabsList className="h-7">
-            <TabsTrigger value="calendar" className="text-xs px-2.5">
+          <TabsList className="h-7 bg-[#B72025]/10 dark:bg-zinc-800">
+            <TabsTrigger value="calendar" className="text-xs px-2.5 data-[state=active]:bg-[#B72025] data-[state=active]:text-white">
               Lịch học
             </TabsTrigger>
-            <TabsTrigger value="list" className="text-xs px-2.5">
+            <TabsTrigger value="list" className="text-xs px-2.5 data-[state=active]:bg-[#B72025] data-[state=active]:text-white">
               Danh sách
             </TabsTrigger>
           </TabsList>
@@ -131,7 +130,7 @@ export function ResultPanel() {
           <Button
             variant={store.selectedPlan === "A" ? "default" : "ghost"}
             size="sm"
-            className="text-xs h-7"
+            className={`text-xs h-7 ${store.selectedPlan !== "A" ? "hover:bg-[#B72025]/10 hover:text-[#B72025]" : ""}`}
             disabled={store.selectedPlan === "A"}
             onClick={() => store.acceptPlan("A")}
           >
@@ -140,7 +139,7 @@ export function ResultPanel() {
           <Button
             variant={store.selectedPlan === "B" ? "secondary" : "ghost"}
             size="sm"
-            className="text-xs h-7"
+            className={`text-xs h-7 ${store.selectedPlan !== "B" ? "hover:bg-[#F5A800]/15 hover:text-[#F5A800]" : ""}`}
             disabled={store.selectedPlan === "B"}
             onClick={() => store.acceptPlan("B")}
           >
@@ -149,7 +148,7 @@ export function ResultPanel() {
         </div>
       </div>
 
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         <div className="space-y-4 p-4">
           {store.currentView === "calendar" ? (
             <VisualCalendar
@@ -203,7 +202,7 @@ export function ResultPanel() {
             </Button>
           </div>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

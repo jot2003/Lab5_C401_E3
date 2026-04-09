@@ -38,12 +38,12 @@ export default function RootLayout({
       className={`${montserrat.variable} ${jetbrainsMono.variable} h-full`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground antialiased">
+      <body className="h-full flex flex-col bg-background text-foreground antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <TooltipProvider>
-            <SidebarProvider>
+            <SidebarProvider className="h-full overflow-hidden">
               <AppSidebar />
-              <SidebarInset>{children}</SidebarInset>
+              <SidebarInset className="overflow-hidden">{children}</SidebarInset>
             </SidebarProvider>
           </TooltipProvider>
           <Toaster />

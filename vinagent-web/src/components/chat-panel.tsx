@@ -9,7 +9,6 @@ import { CitationRef } from "./citation-popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const SUGGESTIONS = [
   "Lên lịch HK Xuân 2026, tránh sáng, phải có Giải tích 2",
@@ -23,12 +22,11 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
   const [typingDone, setTypingDone] = useState(false);
 
   function highlightImportant(text: string) {
-    const redTerms = /(\bPlan B\b|rủi ro|thất bại|cảnh báo|Rủi ro|Thất bại|Cảnh báo)/g;
-    const blueTerms = /(\bPlan A\b|thành công|Thành công|Độ tin cậy|độ tin cậy|đã tạo|Đã tạo|Đã xác nhận|đã xác nhận)/g;
+    const redPattern = /\bPlan [AB]\b|rủi ro|thất bại|cảnh báo|Rủi ro|Thất bại|Cảnh báo|thành công|Thành công|Độ tin cậy|độ tin cậy|đã tạo|Đã tạo|Đã xác nhận|đã xác nhận/;
+    const splitPattern = /(\bPlan [AB]\b|rủi ro|thất bại|cảnh báo|Rủi ro|Thất bại|Cảnh báo|thành công|Thành công|Độ tin cậy|độ tin cậy|đã tạo|Đã tạo|Đã xác nhận|đã xác nhận)/g;
 
-    return text.split(/(\bPlan [AB]\b|rủi ro|thất bại|cảnh báo|Rủi ro|Thất bại|Cảnh báo|thành công|Thành công|Độ tin cậy|độ tin cậy|đã tạo|Đã tạo|Đã xác nhận|đã xác nhận)/g).map((part, i) => {
-      if (redTerms.test(part)) return <span key={i} className="font-semibold text-[#C72127]">{part}</span>;
-      if (blueTerms.test(part)) return <span key={i} className="font-semibold text-[#134D8B]">{part}</span>;
+    return text.split(splitPattern).map((part, i) => {
+      if (redPattern.test(part)) return <span key={i} className="font-semibold text-[#B72025]">{part}</span>;
       return <span key={i}>{part}</span>;
     });
   }
@@ -60,7 +58,7 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
         className={cn(
           "max-w-[85%] rounded-lg px-3 py-2.5 text-sm leading-relaxed whitespace-pre-line",
           isUser
-            ? "bg-[#134D8B] dark:bg-zinc-800 text-white border-0 rounded-tr-sm"
+            ? "bg-[#B72025] dark:bg-zinc-800 text-white border-0 rounded-tr-sm"
             : "border border-border/50 rounded-tl-sm",
         )}
       >
@@ -76,20 +74,17 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
 
 export function ChatPanel() {
   const { messages, prompt, setPrompt, generate, isTyping, flow, clarify } = useVinAgent();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (el && typeof el.scrollTo === "function") {
-      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-    }
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, isTyping]);
 
   const isEmpty = messages.length === 0;
 
   return (
     <div className="flex h-full flex-col">
-      <ScrollArea className="flex-1" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto">
         <div className="px-4 py-4 space-y-3">
           {isEmpty && (
             <div className="flex h-full min-h-[60vh] flex-col items-center justify-center text-center">
@@ -159,8 +154,9 @@ export function ChatPanel() {
               </Button>
             </div>
           )}
+          <div ref={bottomRef} />
         </div>
-      </ScrollArea>
+      </div>
 
       <form
         className="border-t border-border/50 px-4 py-3"

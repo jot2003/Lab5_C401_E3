@@ -28,11 +28,11 @@ export function CitationRef({
   return (
     <Popover>
       <PopoverTrigger
-        className="inline-flex h-4 min-w-4 items-center justify-center rounded bg-secondary px-1 text-[10px] font-bold text-foreground transition-colors hover:bg-accent align-super"
+        className="inline-flex h-4 min-w-4 items-center justify-center rounded bg-secondary px-1 text-[10px] font-bold text-white transition-colors hover:bg-accent align-super"
       >
         {id}
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-3" side="top" align="center">
+      <PopoverContent className="w-64 max-w-[calc(100vw-2rem)] p-3" side="top" align="start">
         <div className="mb-2 flex items-center gap-2">
           <Badge
             variant="outline"
@@ -57,7 +57,7 @@ export function CitationList({ citations }: { citations: Citation[] }) {
   if (citations.length === 0) return null;
   return (
     <div className="space-y-2">
-      <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <h4 className="text-xs font-medium uppercase tracking-wider text-[#B72025]">
         Nguồn tham khảo
       </h4>
       {citations.map((c) => (
@@ -65,7 +65,7 @@ export function CitationList({ citations }: { citations: Citation[] }) {
           key={c.id}
           className="flex items-start gap-2 rounded-lg border border-border/50 bg-card p-3"
         >
-          <span className="flex size-5 shrink-0 items-center justify-center rounded bg-secondary text-[10px] font-bold text-foreground">
+          <span className="flex size-5 shrink-0 items-center justify-center rounded bg-[#B72025] text-[10px] font-bold text-white">
             {c.id}
           </span>
           <div className="min-w-0 flex-1">
@@ -80,7 +80,7 @@ export function CitationList({ citations }: { citations: Citation[] }) {
                 {c.timestamp}
               </span>
             </div>
-            <p className="mt-1 text-xs font-medium leading-normal">{c.title}</p>
+            <p className="mt-1 text-xs font-medium leading-normal text-[#B72025]">{c.title}</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
               {c.detail}
             </p>

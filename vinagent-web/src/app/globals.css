@@ -5,12 +5,12 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Primary brand color: #C72127 (Crimson Red) */
-  --primary-color: oklch(0.55 0.22 28);
-  /* Secondary brand color: #134D8B (Dark Blue) */
-  --secondary-color: oklch(0.35 0.15 260);
-  /* Accent color: Dark Blue */
-  --accent-color: oklch(0.35 0.15 260);
+  /* Primary brand color: #B72025 (Red) */
+  --primary-color: oklch(0.50 0.20 27);
+  /* Secondary brand color: #F5A800 (Amber/Gold) */
+  --secondary-color: oklch(0.73 0.16 75);
+  /* Accent color: Amber/Gold */
+  --accent-color: oklch(0.73 0.16 75);
 
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -31,7 +31,7 @@
   --muted-foreground: oklch(0.45 0 0);
 
   --accent: var(--accent-color);
-  --accent-foreground: oklch(1 0 0);
+  --accent-foreground: oklch(0.1 0 0);
 
   --destructive: oklch(0.55 0.2 25);
   --destructive-foreground: oklch(1 0 0);
@@ -48,13 +48,13 @@
   --trust-mid: var(--warning);
   --trust-low: var(--danger);
 
-  --sidebar: var(--secondary-color);
+  --sidebar: var(--primary-color);
   --sidebar-foreground: oklch(1 0 0);
-  --sidebar-primary: var(--primary-color);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: var(--primary-color);
+  --sidebar-primary: var(--secondary-color);
+  --sidebar-primary-foreground: oklch(0.1 0 0);
+  --sidebar-accent: oklch(0 0 0 / 15%);
   --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0 0 0 / 8%);
+  --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: var(--primary-color);
 
   --chart-1: var(--primary-color);
