@@ -751,8 +751,8 @@ export const generateScheduleTool = tool(
         room: s.room,
         enrolled: s.enrolled,
         capacity: s.capacity,
-        seats: `${s.enrolled}/${s.capacity}`,
         slotsRemaining: s.capacity - s.enrolled,
+        vacancyText: `còn ${Math.max(0, s.capacity - s.enrolled)}/${s.capacity} chỗ trống`,
         seatRisk: s.seatRisk,
         classId: s.classId,
       })) ?? null;

@@ -43,9 +43,11 @@ const SYSTEM_PROMPT = `Bạn là BKAgent — trợ lý AI đăng ký tín chỉ 
 
 ## Format phản hồi
 - Trả lời bằng tiếng Việt, tự nhiên, ngắn gọn, dễ hiểu.
+- KHÔNG dùng markdown nhấn mạnh bằng dấu ** trong nội dung trả lời.
 - Khi trích dẫn dữ liệu từ tool, PHẢI gắn citation theo format: [citation:N] (N là số thứ tự, bắt đầu từ 1).
 - Mỗi fact phải có ít nhất 1 citation.
 - Nếu có rủi ro hết chỗ (seatRisk high), CẢNH BÁO rõ ràng.
+- Khi nêu sức chứa lớp, luôn ghi rõ theo mẫu: "còn X/Y chỗ trống" để tránh hiểu nhầm.
 - Cuối mỗi phản hồi, LUÔN thêm đúng 3 gợi ý câu hỏi tiếp theo, format:
   SUGGESTIONS: ["câu gợi ý 1", "câu gợi ý 2", "câu gợi ý 3"]
   (phải là JSON array hợp lệ, trên 1 dòng riêng cuối cùng)
@@ -53,10 +55,10 @@ const SYSTEM_PROMPT = `Bạn là BKAgent — trợ lý AI đăng ký tín chỉ 
 ## Ví dụ phản hồi
 "Đã kiểm tra lịch HK 20252 cho bạn [citation:1]. Điều kiện tiên quyết đáp ứng [citation:2].
 
-**Plan A** — Tối ưu:
-• MI1131 (Giải tích II) — Thứ 6, 14:00–16:30, phòng D5-401 (45/90 chỗ)
+Plan A — Tối ưu:
+- MI1131 (Giải tích II) — Thứ 6, 14:00–16:30, phòng D5-401 (còn 45/90 chỗ trống)
 
-⚠ Lưu ý: SSH1121 còn 2/150 chỗ, rủi ro hết chỗ cao [citation:3].
+Lưu ý: SSH1121 còn 2/150 chỗ trống, rủi ro hết chỗ cao [citation:3].
 
 SUGGESTIONS: ["So sánh Plan A và Plan B cho tôi", "Tôi có thể đổi lịch môn Giải tích II không?", "Môn nào có nguy cơ hết chỗ cao nhất?"]"
 
@@ -91,7 +93,6 @@ export type PlanSlot = {
   startHour: number;
   endHour: number;
   room: string;
-  seats: string;
   seatRisk: string;
   classId: string;
 };
@@ -249,6 +250,8 @@ function parseAgentResponse(messages: BaseMessage[]): AgentResponse {
 
   // Normalize citation markers: [citation:N] → [N]
   rawText = rawText.replace(/\[citation:(\d+)\]/g, "[$1]");
+  // Remove markdown bold markers to keep plain, readable text in UI.
+  rawText = rawText.replace(/\*\*/g, "");
   // Remove legacy "Điểm tin cậy" lines from model text (UI computes confidence separately)
   rawText = rawText.replace(/\n?Điểm tin cậy:\s*\d+\s*\/\s*100\s*/gi, "\n");
 
