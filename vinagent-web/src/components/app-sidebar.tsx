@@ -37,9 +37,13 @@ export function AppSidebar() {
   const [, forceTick] = useState(0);
   const currentUser: StudentProfile | null = getCurrentStudent();
   const pendingInviteCount = currentUser ? getPendingInvitesFor(currentUser.id).length : 0;
-  const { sessions, currentSessionId, newSession, loadSession, deleteSession } = useBKAgent();
+  const { sessions, currentSessionId, newSession, loadSession, deleteSession, stopGenerating } = useBKAgent();
   const ownerId = currentUser?.id ?? "anonymous";
   const userSessions = sessions.filter((s) => (s.ownerId ?? "anonymous") === ownerId);
+
+  useEffect(() => {
+    stopGenerating();
+  }, [pathname, stopGenerating]);
 
   useEffect(() => {
     // Keep runtime context isolated per logged-in user
@@ -90,11 +94,13 @@ export function AppSidebar() {
   }, []);
 
   function handleNewChat() {
+    stopGenerating();
     newSession();
     router.push("/tao-ke-hoach");
   }
 
   function handleLoadSession(id: string) {
+    stopGenerating();
     loadSession(id);
     router.push("/tao-ke-hoach");
   }
@@ -177,6 +183,7 @@ export function AppSidebar() {
                         className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:text-red-300"
                         onClick={(e) => {
                           e.stopPropagation();
+                          stopGenerating();
                           deleteSession(session.id);
                         }}
                         title="Xóa phiên"
@@ -214,7 +221,7 @@ export function AppSidebar() {
             )}
             <button
               className="mt-1 flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-white/60 hover:text-white hover:bg-white/10 transition-colors"
-              onClick={() => { logoutAccount(); router.push("/dang-nhap"); }}
+              onClick={() => { stopGenerating(); logoutAccount(); router.push("/dang-nhap"); }}
             >
               <LogOut className="size-3" />
               <span>Đăng xuất</span>

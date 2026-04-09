@@ -5,6 +5,7 @@ import type { Citation } from "./citations";
 
 export type FlowState = "idle" | "happy" | "lowConfidence" | "failure" | "recovery" | "escalated";
 export type ConfidenceLevel = "high" | "medium" | "low";
+export type AIProvider = "gemini" | "chatgpt";
 
 export type ChatMessage = {
   id: string;
@@ -62,6 +63,8 @@ export interface BKAgentState {
   toast: { title: string; message: string } | null;
   messages: ChatMessage[];
   currentView: "calendar" | "list";
+  aiProvider: AIProvider;
+  apiKey: string;
   isTyping: boolean;
   planACourses: CourseSlot[];
   planBCourses: CourseSlot[];
@@ -84,6 +87,9 @@ export interface BKAgentState {
   setPrompt: (prompt: string) => void;
   setToast: (toast: { title: string; message: string } | null) => void;
   setCurrentView: (view: "calendar" | "list") => void;
+  setAIProvider: (provider: AIProvider) => void;
+  setApiKey: (apiKey: string) => void;
+  stopGenerating: () => void;
   generate: (inputPrompt: string) => void;
   acceptPlan: (plan: "A" | "B") => void;
   toggleEdit: () => void;
@@ -113,6 +119,8 @@ let stepCounter = 0;
 function makeStepId() {
   return `step-${++stepCounter}-${Date.now()}`;
 }
+
+let activeChatAbortController: AbortController | null = null;
 
 function toCourseSlots(
   plan: { code: string; name: string; day: string; startHour: number; endHour: number; room: string; enrolled?: number; capacity?: number; slotsRemaining?: number; seatRisk?: string }[] | null
@@ -155,6 +163,8 @@ const initialState = {
   toast: null as { title: string; message: string } | null,
   messages: [] as ChatMessage[],
   currentView: "calendar" as "calendar" | "list",
+  aiProvider: "gemini" as AIProvider,
+  apiKey: "",
   isTyping: false,
   planACourses: [] as CourseSlot[],
   planBCourses: [] as CourseSlot[],
@@ -180,8 +190,20 @@ export const useBKAgent = create<BKAgentState>()(
       setPrompt: (prompt) => set({ prompt }),
       setToast: (toast) => set({ toast }),
       setCurrentView: (view) => set({ currentView: view }),
+      setAIProvider: (provider) => set({ aiProvider: provider }),
+      setApiKey: (apiKey) => set({ apiKey }),
+
+      stopGenerating: () => {
+        activeChatAbortController?.abort();
+        activeChatAbortController = null;
+        set({ isTyping: false, streamingSteps: [] });
+      },
 
       generate: async (inputPrompt) => {
+        activeChatAbortController?.abort();
+        const controller = new AbortController();
+        activeChatAbortController = controller;
+
         const userMsg: ChatMessage = {
           id: makeId(),
           role: "user",
@@ -201,7 +223,15 @@ export const useBKAgent = create<BKAgentState>()(
           const res = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: inputPrompt, history: currentHistory }),
+            signal: controller.signal,
+            body: JSON.stringify({
+              message: inputPrompt,
+              history: currentHistory,
+              aiConfig: {
+                provider: get().aiProvider,
+                apiKey: get().apiKey.trim() || undefined,
+              },
+            }),
           });
 
           if (!res.ok || !res.body) {
@@ -353,6 +383,10 @@ export const useBKAgent = create<BKAgentState>()(
           // Stream ended without a done event — ensure loading is cleared
           set((s) => s.isTyping ? { isTyping: false, streamingSteps: [] } : {});
         } catch (error) {
+          if (controller.signal.aborted) {
+            set((s) => (s.isTyping ? { isTyping: false, streamingSteps: [] } : {}));
+            return;
+          }
           const errorMsg =
             error instanceof Error ? error.message : "Lỗi không xác định";
           const assistantMsg: ChatMessage = {
@@ -368,6 +402,10 @@ export const useBKAgent = create<BKAgentState>()(
             flow: "failure",
             toast: { title: "Lỗi", message: errorMsg },
           }));
+        } finally {
+          if (activeChatAbortController === controller) {
+            activeChatAbortController = null;
+          }
         }
       },
 
@@ -557,6 +595,8 @@ export const useBKAgent = create<BKAgentState>()(
       partialize: (state) => ({
         sessions: state.sessions,
         currentSessionId: state.currentSessionId,
+        aiProvider: state.aiProvider,
+        apiKey: state.apiKey,
       }),
     }
   )

@@ -4,11 +4,17 @@ import { streamAgent } from "@/lib/ai/agent";
 export type ChatRequestBody = {
   message: string;
   history?: { role: "user" | "model"; text: string }[];
+  aiConfig?: { provider: "gemini" | "chatgpt"; apiKey?: string };
 };
 
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as ChatRequestBody;
+    const provider = body.aiConfig?.provider;
+    const aiConfig =
+      provider === "gemini" || provider === "chatgpt"
+        ? { provider, apiKey: body.aiConfig?.apiKey?.trim() || undefined }
+        : undefined;
 
     if (!body.message?.trim()) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
@@ -18,7 +24,7 @@ export async function POST(req: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const event of streamAgent(body.message, body.history || [])) {
+          for await (const event of streamAgent(body.message, body.history || [], aiConfig)) {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
           }
         } catch (err) {

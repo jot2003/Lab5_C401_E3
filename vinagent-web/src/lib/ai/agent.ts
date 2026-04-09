@@ -1,4 +1,5 @@
 import { ChatGoogle } from "@langchain/google";
+import { ChatOpenAI } from "@langchain/openai";
 import {
   StateGraph,
   MessagesAnnotation,
@@ -95,6 +96,11 @@ export type PlanSlot = {
   classId: string;
 };
 
+export type AIConfig = {
+  provider?: "gemini" | "chatgpt";
+  apiKey?: string;
+};
+
 // ── LangGraph StateGraph ──
 
 function shouldContinue(
@@ -111,15 +117,31 @@ function shouldContinue(
   return END;
 }
 
-function buildGraph() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
+function buildGraph(config?: AIConfig) {
+  const provider = config?.provider ?? "gemini";
+  const providedApiKey = config?.apiKey?.trim();
+  const geminiApiKey = providedApiKey || process.env.GEMINI_API_KEY;
+  const openAiApiKey = providedApiKey || process.env.OPENAI_API_KEY;
 
-  const model = new ChatGoogle({
-    apiKey,
-    model: process.env.DEFAULT_MODEL || "gemini-2.5-flash",
-    temperature: 0,
-  }).bindTools(allTools);
+  if (provider === "chatgpt" && !openAiApiKey) {
+    throw new Error("OPENAI_API_KEY not configured");
+  }
+  if (provider === "gemini" && !geminiApiKey) {
+    throw new Error("GEMINI_API_KEY not configured");
+  }
+
+  const model =
+    provider === "chatgpt"
+      ? new ChatOpenAI({
+          apiKey: openAiApiKey,
+          model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+          temperature: 0,
+        }).bindTools(allTools)
+      : new ChatGoogle({
+          apiKey: geminiApiKey,
+          model: process.env.DEFAULT_MODEL || "gemini-2.5-flash",
+          temperature: 0,
+        }).bindTools(allTools);
 
   const toolNode = new ToolNode(allTools);
 
@@ -246,9 +268,10 @@ function parseAgentResponse(messages: BaseMessage[]): AgentResponse {
 
 export async function runAgent(
   userMessage: string,
-  history: { role: "user" | "model"; text: string }[]
+  history: { role: "user" | "model"; text: string }[],
+  config?: AIConfig
 ): Promise<AgentResponse> {
-  const graph = buildGraph();
+  const graph = buildGraph(config);
   const messages: BaseMessage[] = [new SystemMessage(SYSTEM_PROMPT)];
 
   for (const h of history) {
@@ -279,9 +302,10 @@ const TOOL_LABELS: Record<string, string> = {
 
 export async function* streamAgent(
   userMessage: string,
-  history: { role: "user" | "model"; text: string }[]
+  history: { role: "user" | "model"; text: string }[],
+  config?: AIConfig
 ): AsyncGenerator<StreamEvent> {
-  const graph = buildGraph();
+  const graph = buildGraph(config);
 
   const { HumanMessage, AIMessage: AIM, SystemMessage: SM } = await import("@langchain/core/messages");
   const messages: BaseMessage[] = [new SM(SYSTEM_PROMPT)];

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, Loader2, CheckCircle2 } from "lucide-react";
+import { Send, Loader2, CheckCircle2, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBKAgent, type ChatMessage } from "@/lib/store";
 import { TypingText } from "./typing-text";
@@ -95,12 +95,17 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
 export function ChatPanel() {
   const { messages, prompt, setPrompt, generate, isTyping, flow, clarify, streamingSteps, suggestions, lastGeneratedMsgId } =
     useBKAgent();
+  const stopGenerating = useBKAgent((state) => state.stopGenerating);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages.length, isTyping, streamingSteps.length]);
+
+  useEffect(() => () => {
+    stopGenerating();
+  }, [stopGenerating]);
 
   const isEmpty = messages.length === 0;
 
@@ -291,14 +296,25 @@ export function ChatPanel() {
             disabled={isTyping}
             className="flex-1 bg-white text-sm h-10 border-border focus-visible:ring-primary/50"
           />
-          <Button
-            type="submit"
-            size="default"
-            className="h-10 px-4 bg-primary hover:bg-primary/85 text-white"
-            disabled={!prompt.trim() || isTyping}
-          >
-            <Send className="size-4" />
-          </Button>
+          {isTyping ? (
+            <Button
+              type="button"
+              size="default"
+              className="h-10 px-4 border border-primary bg-primary text-white hover:bg-primary/90 hover:border-primary shadow-sm shadow-primary/20"
+              onClick={stopGenerating}
+            >
+              <Square className="size-4" />
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              size="default"
+              className="h-10 px-4 bg-primary hover:bg-primary/85 text-white"
+              disabled={!prompt.trim()}
+            >
+              <Send className="size-4" />
+            </Button>
+          )}
         </div>
       </form>
     </div>
