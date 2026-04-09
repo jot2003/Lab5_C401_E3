@@ -3,16 +3,9 @@ import { z } from "zod";
 import scheduleData from "../mock/schedule.json";
 import coursesData from "../mock/courses.json";
 import prerequisitesData from "../mock/prerequisites.json";
-import studentData from "../mock/student.json";
+import { getCurrentStudent } from "../student-data";
 
 type ScheduleEntry = (typeof scheduleData)[number];
-type Student = (typeof studentData)["students"][number];
-
-function getCurrentStudent(): Student {
-  const selected = studentData.students.find((s) => s.id === studentData.currentStudentId);
-  if (selected) return selected;
-  return studentData.students[0];
-}
 
 // ── Tool 1: Get Student Profile ──
 
@@ -24,7 +17,7 @@ export const getStudentProfileTool = tool(
       _citation: {
         type: "sis",
         title: "Hồ sơ sinh viên — HUST dk-sis",
-        detail: `${studentData.name} (${studentData.id}), ${studentData.major} năm ${studentData.year}, GPA ${studentData.gpa}. Đã hoàn thành: ${studentData.completedCourses.join(", ")}.`,
+        detail: `${student.name} (${student.id}), ${student.major} năm ${student.year}, GPA ${student.gpa}. Đã hoàn thành: ${student.completedCourses.join(", ")}.`,
       },
     });
   },

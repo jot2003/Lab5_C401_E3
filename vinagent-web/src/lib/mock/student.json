@@ -1,34 +1,114 @@
 {
-  "id": "20210001",
-  "name": "Nguyễn Văn An",
-  "major": "Khoa học Máy tính",
-  "program": "CTTT",
-  "year": 2,
-  "gpa": 3.15,
-  "currentSemester": "20252",
-  "completedCourses": [
-    "MI1111",
-    "MI1121",
-    "PH1110",
-    "IT1110",
-    "FL1101",
-    "SSH1111",
-    "PE1011"
-  ],
-  "inProgressCourses": [],
-  "targetCourses": ["MI1131", "PH1120", "IT2110", "SSH1121", "PE1021"],
-  "preferences": {
-    "avoidMorning": false,
-    "avoidAfternoon": false,
-    "preferGroupFriends": true,
-    "priorityDays": ["Mon", "Tue", "Wed", "Thu", "Fri"],
-    "maxCreditsPerSemester": 21
-  },
-  "groupFriends": [
-    { "id": "20210042", "name": "Trần Minh Đức" },
-    { "id": "20210078", "name": "Lê Thị Hương" },
-    { "id": "20210156", "name": "Phạm Hoàng Nam" }
-  ],
-  "advisorId": "advisor-cs-001",
-  "advisorName": "PGS.TS. Nguyễn Thanh Tùng"
+  "currentStudentId": "20210001",
+  "students": [
+    {
+      "id": "20210001",
+      "name": "Nguyễn Văn An",
+      "major": "Khoa học Máy tính",
+      "program": "CTTT",
+      "year": 2,
+      "gpa": 3.15,
+      "currentSemester": "20252",
+      "completedCourses": [
+        "MI1111",
+        "MI1121",
+        "PH1110",
+        "IT1110",
+        "FL1101",
+        "SSH1111",
+        "PE1011"
+      ],
+      "inProgressCourses": [],
+      "targetCourses": ["MI1131", "PH1120", "IT2110", "SSH1121", "PE1021"],
+      "preferences": {
+        "avoidMorning": false,
+        "avoidAfternoon": false,
+        "preferGroupFriends": true,
+        "priorityDays": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+        "maxCreditsPerSemester": 21
+      },
+      "groupFriends": [
+        { "id": "20210042", "name": "Trần Minh Đức" },
+        { "id": "20210078", "name": "Lê Thị Hương" },
+        { "id": "20210156", "name": "Phạm Hoàng Nam" }
+      ],
+      "advisorId": "advisor-cs-001",
+      "advisorName": "PGS.TS. Nguyễn Thanh Tùng"
+    },
+    {
+      "id": "20210042",
+      "name": "Trần Minh Đức",
+      "major": "Khoa học Máy tính",
+      "program": "CTTT",
+      "year": 2,
+      "gpa": 3.42,
+      "currentSemester": "20252",
+      "completedCourses": ["MI1111", "MI1121", "PH1110", "IT1110", "IT1140"],
+      "inProgressCourses": ["IT2030"],
+      "targetCourses": ["IT2110", "IT2120", "MI1131", "PE1021"],
+      "preferences": {
+        "avoidMorning": true,
+        "avoidAfternoon": false,
+        "preferGroupFriends": true,
+        "priorityDays": ["Tue", "Wed", "Thu"],
+        "maxCreditsPerSemester": 20
+      },
+      "groupFriends": [
+        { "id": "20210001", "name": "Nguyễn Văn An" },
+        { "id": "20210078", "name": "Lê Thị Hương" }
+      ],
+      "advisorId": "advisor-cs-001",
+      "advisorName": "PGS.TS. Nguyễn Thanh Tùng"
+    },
+    {
+      "id": "20210078",
+      "name": "Lê Thị Hương",
+      "major": "Khoa học Dữ liệu",
+      "program": "Tiêu chuẩn",
+      "year": 3,
+      "gpa": 3.56,
+      "currentSemester": "20252",
+      "completedCourses": ["MI1111", "MI1121", "IT1110", "IT3020", "ST1010"],
+      "inProgressCourses": [],
+      "targetCourses": ["IT3150", "IT3170", "MI2020", "SSH1121"],
+      "preferences": {
+        "avoidMorning": false,
+        "avoidAfternoon": true,
+        "preferGroupFriends": false,
+        "priorityDays": ["Mon", "Wed", "Fri"],
+        "maxCreditsPerSemester": 18
+      },
+      "groupFriends": [
+        { "id": "20210042", "name": "Trần Minh Đức" },
+        { "id": "20210156", "name": "Phạm Hoàng Nam" }
+      ],
+      "advisorId": "advisor-ds-002",
+      "advisorName": "TS. Lê Thu Hà"
+    },
+    {
+      "id": "20210156",
+      "name": "Phạm Hoàng Nam",
+      "major": "Kỹ thuật Máy tính",
+      "program": "CTTT",
+      "year": 1,
+      "gpa": 2.98,
+      "currentSemester": "20252",
+      "completedCourses": ["MI1111", "PH1110", "IT1110", "FL1101"],
+      "inProgressCourses": ["PE1011"],
+      "targetCourses": ["MI1121", "PH1120", "IT2110", "SSH1111"],
+      "preferences": {
+        "avoidMorning": false,
+        "avoidAfternoon": false,
+        "preferGroupFriends": true,
+        "priorityDays": ["Mon", "Tue", "Thu", "Fri"],
+        "maxCreditsPerSemester": 19
+      },
+      "groupFriends": [
+        { "id": "20210001", "name": "Nguyễn Văn An" },
+        { "id": "20210078", "name": "Lê Thị Hương" }
+      ],
+      "advisorId": "advisor-ce-003",
+      "advisorName": "TS. Phạm Đức Long"
+    }
+  ]
 }

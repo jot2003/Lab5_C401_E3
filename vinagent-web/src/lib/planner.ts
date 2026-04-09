@@ -1,7 +1,7 @@
 import type { Citation } from "./citations";
 import scheduleData from "./mock/schedule.json";
 import prerequisitesData from "./mock/prerequisites.json";
-import studentData from "./mock/student.json";
+import { getCurrentStudent } from "./student-data";
 
 export type PlannerFlow = "happy" | "lowConfidence" | "failure";
 
@@ -26,38 +26,62 @@ export type PlannerDecision = {
   citations: Citation[];
 };
 
-function getCurrentStudent() {
-  return (
-    studentData.students.find((s) => s.id === studentData.currentStudentId) ||
-    studentData.students[0]
-  );
-}
-
-// Môn học trong Plan A — ánh xạ để check seat risk từ schedule.json
-const PLAN_A_COURSE_IDS = ["IT3010E", "IT3020E", "IT3100E", "IT3080"];
-
-/** Kiểm tra seat risk thực tế từ schedule.json cho các môn trong Plan A */
-function checkSeatRisk(): { risk: ToolSnapshot["seatRisk"]; details: string } {
-  const highRiskSlots = scheduleData.filter(
-    (s) => PLAN_A_COURSE_IDS.includes(s.courseCode) && s.seatRisk === "high"
-  );
-  const mediumRiskSlots = scheduleData.filter(
-    (s) => PLAN_A_COURSE_IDS.includes(s.courseCode) && s.seatRisk === "medium"
-  );
-
-  if (highRiskSlots.length > 0) {
-    const detail = highRiskSlots
-      .map((s) => `${s.courseCode} (${s.enrolled}/${s.capacity} chỗ, phòng ${s.room})`)
-      .join("; ");
-    return { risk: "high", details: detail };
+/**
+ * Ước lượng seat risk theo từng môn mục tiêu:
+ * - high: mọi lớp của ít nhất 1 môn đều high
+ * - medium: có môn tệ nhất ở mức medium
+ * - low: mỗi môn đều có ít nhất 1 lựa chọn low
+ */
+function checkSeatRisk(targetCourses: string[]): { risk: ToolSnapshot["seatRisk"]; details: string } {
+  const offerings = scheduleData.filter((s) => targetCourses.includes(s.courseCode));
+  if (offerings.length === 0) {
+    return { risk: "medium", details: "Chưa có dữ liệu lớp học cho danh sách môn mục tiêu." };
   }
-  if (mediumRiskSlots.length > 0) {
-    const detail = mediumRiskSlots
-      .map((s) => `${s.courseCode} (${s.enrolled}/${s.capacity} chỗ)`)
-      .join("; ");
-    return { risk: "medium", details: detail };
+
+  let hasAnyCourseAllHigh = false;
+  let hasAnyCourseNoLow = false;
+  const details: string[] = [];
+
+  for (const courseCode of targetCourses) {
+    const classes = offerings.filter((s) => s.courseCode === courseCode);
+    if (classes.length === 0) {
+      hasAnyCourseNoLow = true;
+      details.push(`${courseCode}: chưa có lớp mở`);
+      continue;
+    }
+
+    const hasLow = classes.some((c) => c.seatRisk === "low");
+    const hasMedium = classes.some((c) => c.seatRisk === "medium");
+    const hasHigh = classes.some((c) => c.seatRisk === "high");
+    const allHigh = classes.every((c) => c.seatRisk === "high");
+
+    if (allHigh) {
+      hasAnyCourseAllHigh = true;
+    }
+    if (!hasLow) {
+      hasAnyCourseNoLow = true;
+    }
+
+    const bestTier = hasLow ? "low" : hasMedium ? "medium" : "high";
+    const maxEnrollment = Math.max(...classes.map((c) => c.enrolled / c.capacity));
+    const maxPct = Math.round(maxEnrollment * 100);
+    details.push(`${courseCode}: tốt nhất ${bestTier}, lớp đông nhất ${maxPct}%`);
+
+    if (hasHigh) {
+      const hotClass = classes.find((c) => c.seatRisk === "high");
+      if (hotClass) {
+        details.push(`${courseCode} lớp rủi ro cao: ${hotClass.classId} (${hotClass.enrolled}/${hotClass.capacity})`);
+      }
+    }
   }
-  return { risk: "low", details: "Tất cả lớp trong Plan A còn chỗ phù hợp." };
+
+  if (hasAnyCourseAllHigh) {
+    return { risk: "high", details: details.join("; ") };
+  }
+  if (hasAnyCourseNoLow) {
+    return { risk: "medium", details: details.join("; ") };
+  }
+  return { risk: "low", details: details.join("; ") };
 }
 
 /** Kiểm tra điều kiện tiên quyết từ prerequisites.json + hồ sơ sinh viên */
@@ -92,13 +116,15 @@ function runMockTools(prompt: string): ToolSnapshot & { seatDetail: string; prer
   const staleDataSignal = normalized.includes("stale") || normalized.includes("high risk") || normalized.includes("dữ liệu cũ");
   const forcePrereqFail = normalized.includes("missing prereq") || normalized.includes("thiếu điều kiện");
 
-  // Xác định danh sách môn mục tiêu từ prompt hoặc dùng mặc định
+  // Xác định danh sách môn mục tiêu từ prompt hoặc dùng hồ sơ hiện tại
   const targetCourses = forcePrereqFail
     ? ["IT3160E", "IT3190E", "IT3080"]
-    : PLAN_A_COURSE_IDS;
+    : normalized.includes("giai tich 2") || normalized.includes("giải tích 2") || normalized.includes("mi1131")
+      ? ["MI1131"]
+      : getCurrentStudent().targetCourses;
 
   const prereqCheck = checkPrerequisites(targetCourses);
-  const seatCheck = checkSeatRisk();
+  const seatCheck = checkSeatRisk(targetCourses);
 
   // Keyword override: near full / waitlist
   const seatRiskOverride: ToolSnapshot["seatRisk"] | null =
@@ -136,6 +162,7 @@ export function evaluatePlannerDecision(prompt: string): PlannerDecision {
   }
 
   let score = 100;
+  let isUnclearIntent = false;
 
   if (!normalized) {
     score -= 45;
@@ -150,12 +177,13 @@ export function evaluatePlannerDecision(prompt: string): PlannerDecision {
     normalized.includes("không rõ") ||
     normalized.includes("help")
   ) {
+    isUnclearIntent = true;
     score -= 30;
     const cid = addCitation("regulation", "Bộ phân tích ý định", "Ý định người dùng không đủ rõ ràng để tự động tạo kế hoạch.");
     reasons.push({ text: "Ý định chưa rõ ràng, cần làm rõ trước khi tạo kế hoạch.", citationIds: [cid] });
   }
 
-  if (!toolSnapshot.prerequisitesOk) {
+  if (!isUnclearIntent && !toolSnapshot.prerequisitesOk) {
     score -= 25;
     const missingList = toolSnapshot.prereqMissing
       .map((m) => `${m.course} (thiếu: ${m.missing.join(", ")})`)
@@ -168,7 +196,7 @@ export function evaluatePlannerDecision(prompt: string): PlannerDecision {
     reasons.push({ text: `Thiếu điều kiện tiên quyết: ${missingList}.`, citationIds: [cid] });
   }
 
-  if (toolSnapshot.seatRisk === "medium") {
+  if (!isUnclearIntent && toolSnapshot.seatRisk === "medium") {
     score -= 10;
     const cid = addCitation(
       "sis",
@@ -178,7 +206,7 @@ export function evaluatePlannerDecision(prompt: string): PlannerDecision {
     reasons.push({ text: "Rủi ro hết chỗ ở mức trung bình, nên giữ Plan B dự phòng.", citationIds: [cid] });
   }
 
-  if (toolSnapshot.seatRisk === "high") {
+  if (!isUnclearIntent && toolSnapshot.seatRisk === "high") {
     score -= 20;
     const cid = addCitation(
       "sis",
@@ -188,7 +216,7 @@ export function evaluatePlannerDecision(prompt: string): PlannerDecision {
     reasons.push({ text: "Rủi ro hết chỗ cao — IT3100E còn 6/140 chỗ. Cần kích hoạt Plan B ngay.", citationIds: [cid] });
   }
 
-  if (!toolSnapshot.dataFresh) {
+  if (!isUnclearIntent && !toolSnapshot.dataFresh) {
     score -= 25;
     const cid = addCitation(
       "sis",
@@ -217,7 +245,7 @@ export function evaluatePlannerDecision(prompt: string): PlannerDecision {
   const happyCid2 = addCitation(
     "prerequisite",
     "Kiểm tra điều kiện tiên quyết — HUST dk-sis",
-    `Sinh viên đã hoàn thành: ${studentData.completedCourses.join(", ")}. Tất cả điều kiện tiên quyết cho HK 20252 đều đáp ứng.`
+    `Sinh viên đã hoàn thành: ${getCurrentStudent().completedCourses.join(", ")}. Tất cả điều kiện tiên quyết cho HK 20252 đều đáp ứng.`
   );
   const communityCid = addCitation(
     "community",
