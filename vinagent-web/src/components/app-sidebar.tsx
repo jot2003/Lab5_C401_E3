@@ -34,8 +34,8 @@ export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [historyOpen, setHistoryOpen] = useState(true);
+  const [currentUser, setCurrentUser] = useState<StudentProfile | null>(null);
   const [, forceTick] = useState(0);
-  const currentUser: StudentProfile | null = getCurrentStudent();
   const pendingInviteCount = currentUser ? getPendingInvitesFor(currentUser.id).length : 0;
   const { sessions, currentSessionId, newSession, loadSession, deleteSession, stopGenerating } = useBKAgent();
   const ownerId = currentUser?.id ?? "anonymous";
@@ -44,6 +44,14 @@ export function AppSidebar() {
   useEffect(() => {
     stopGenerating();
   }, [pathname, stopGenerating]);
+
+  useEffect(() => {
+    setCurrentUser(getCurrentStudent());
+  }, []);
+
+  useEffect(() => {
+    setCurrentUser(getCurrentStudent());
+  }, [pathname]);
 
   useEffect(() => {
     // Keep runtime context isolated per logged-in user
@@ -79,7 +87,10 @@ export function AppSidebar() {
   }, [pathname]); // re-check on navigation (login/logout)
 
   useEffect(() => {
-    const rerender = () => forceTick((n) => n + 1);
+    const rerender = () => {
+      setCurrentUser(getCurrentStudent());
+      forceTick((n) => n + 1);
+    };
     const onStorage = (e: StorageEvent) => {
       if (!e.key || e.key === "bkagent.groupInvites" || e.key === "bkagent.currentUser") {
         rerender();
