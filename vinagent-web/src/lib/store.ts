@@ -63,6 +63,7 @@ export interface BKAgentState {
   chatHistory: { role: "user" | "model"; text: string }[];
   streamingSteps: AgentStep[];
   suggestions: string[];
+  lastGeneratedMsgId: string | null;
 
   // Chat session history
   sessions: ChatSession[];
@@ -145,6 +146,7 @@ const initialState = {
   chatHistory: [] as { role: "user" | "model"; text: string }[],
   streamingSteps: [] as AgentStep[],
   suggestions: [] as string[],
+  lastGeneratedMsgId: null as string | null,
   advisorBriefOpen: false,
   editPlanOpen: false,
   registerDialogOpen: false,
@@ -318,6 +320,7 @@ export const useBKAgent = create<BKAgentState>()(
                       planACourses: updatedPlanA,
                       planBCourses: updatedPlanB,
                       suggestions: data.suggestions ?? [],
+                      lastGeneratedMsgId: assistantMsg.id,
                       chatHistory: [
                         ...s.chatHistory,
                         { role: "user" as const, text: inputPrompt },
@@ -507,6 +510,8 @@ export const useBKAgent = create<BKAgentState>()(
           flow: "happy",
           isTyping: false,
           streamingSteps: [],
+          lastGeneratedMsgId: null,
+          suggestions: [],
           chatHistory: session.messages
             .filter((m) => m.role === "user" || m.role === "assistant")
             .map((m) => ({

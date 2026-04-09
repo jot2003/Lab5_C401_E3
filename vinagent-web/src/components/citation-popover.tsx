@@ -18,10 +18,11 @@ export function CitationRef({
   citation?: Citation;
 }) {
   if (!citation) {
+    // Citation ID not in store — show plain superscript, no popover
     return (
-      <span className="inline-flex size-4 items-center justify-center rounded bg-primary/40 px-1 text-[10px] font-bold text-white align-super ml-0.5">
-        {id}
-      </span>
+      <sup className="text-[10px] text-muted-foreground/60 ml-0.5 font-mono select-none">
+        [{id}]
+      </sup>
     );
   }
 

@@ -8,7 +8,7 @@ export default function CreatePlanPage() {
   return (
     <Group
       orientation="horizontal"
-      className="flex flex-1 overflow-hidden h-[calc(100dvh-1px)]"
+      className="flex flex-1 h-full overflow-hidden"
     >
       <Panel defaultSize="38%" minSize="28%" maxSize="55%" className="h-full overflow-hidden">
         <ChatPanel />

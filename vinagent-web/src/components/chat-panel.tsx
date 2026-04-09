@@ -9,7 +9,6 @@ import { CitationRef } from "./citation-popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const SUGGESTIONS = [
   "Lên lịch HK 20252, tránh sáng, phải có Giải tích II và Vật lý II",
@@ -94,23 +93,25 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
 }
 
 export function ChatPanel() {
-  const { messages, prompt, setPrompt, generate, isTyping, flow, clarify, streamingSteps, suggestions } =
+  const { messages, prompt, setPrompt, generate, isTyping, flow, clarify, streamingSteps, suggestions, lastGeneratedMsgId } =
     useBKAgent();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // @base-ui ScrollArea places ref on Root; actual scrollable node is the Viewport
-    const viewport = scrollRef.current?.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]') ?? scrollRef.current;
-    if (viewport) {
-      viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
-    }
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages.length, isTyping, streamingSteps.length]);
 
   const isEmpty = messages.length === 0;
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <ScrollArea className="min-h-0 flex-1" ref={scrollRef}>
+      {/* Native scroll div — reliable sticky input at bottom */}
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        style={{ scrollbarWidth: "thin", scrollbarColor: "oklch(0.6 0.16 23 / 0.35) transparent" }}
+      >
         <div className="px-4 py-4 space-y-3">
           {isEmpty && (
             <div className="flex h-full min-h-[60vh] flex-col items-center justify-center text-center">
@@ -149,7 +150,11 @@ export function ChatPanel() {
             <MessageBubble
               key={msg.id}
               message={msg}
-              isLatest={idx === messages.length - 1 && msg.role === "assistant"}
+              isLatest={
+                idx === messages.length - 1 &&
+                msg.role === "assistant" &&
+                msg.id === lastGeneratedMsgId
+              }
             />
           ))}
 
@@ -268,7 +273,7 @@ export function ChatPanel() {
               </div>
             )}
         </div>
-      </ScrollArea>
+      </div>
 
       <form
         className="flex-shrink-0 border-t border-border/50 px-4 py-3"
