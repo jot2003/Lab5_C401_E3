@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runAgent, type AgentResponse } from "@/lib/ai/agent";
-import type { Content } from "@google/generative-ai";
 
 export type ChatRequestBody = {
   message: string;
@@ -20,12 +19,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const history: Content[] = (body.history || []).map((h) => ({
-      role: h.role,
-      parts: [{ text: h.text }],
-    }));
-
-    const result = await runAgent(body.message, history);
+    const result = await runAgent(body.message, body.history || []);
 
     return NextResponse.json(result);
   } catch (error) {

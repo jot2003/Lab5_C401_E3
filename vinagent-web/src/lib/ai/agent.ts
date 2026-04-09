@@ -1,11 +1,20 @@
+import { ChatGoogle } from "@langchain/google";
 import {
-  GoogleGenerativeAI,
-  type Content,
-  type Part,
-  type FunctionCall,
-} from "@google/generative-ai";
-import { toolDeclarations, executeToolCall } from "./tools";
+  StateGraph,
+  MessagesAnnotation,
+  END,
+  START,
+} from "@langchain/langgraph";
+import { ToolNode } from "@langchain/langgraph/prebuilt";
+import {
+  SystemMessage,
+  type BaseMessage,
+  AIMessage,
+} from "@langchain/core/messages";
+import { allTools } from "./tools";
 import type { Citation } from "../citations";
+
+// ── System Prompt ──
 
 const SYSTEM_PROMPT = `Bạn là VinAgent — trợ lý AI đăng ký học phần thông minh của VinUniversity.
 
@@ -47,6 +56,8 @@ const SYSTEM_PROMPT = `Bạn là VinAgent — trợ lý AI đăng ký học ph�
 - Khi không chắc chắn, hỏi lại thay vì đoán.
 - Plan B luôn là phương án dự phòng khi Plan A có rủi ro.`;
 
+// ── Types ──
+
 export type AgentResponse = {
   text: string;
   citations: Citation[];
@@ -69,96 +80,128 @@ export type PlanSlot = {
   classId: string;
 };
 
-const MAX_TOOL_ROUNDS = 6;
+// ── LangGraph StateGraph ──
 
-export async function runAgent(
-  userMessage: string,
-  history: Content[]
-): Promise<AgentResponse> {
+function shouldContinue(
+  state: typeof MessagesAnnotation.State
+): "tools" | typeof END {
+  const lastMessage = state.messages[state.messages.length - 1];
+  if (
+    lastMessage &&
+    "tool_calls" in lastMessage &&
+    (lastMessage as AIMessage).tool_calls?.length
+  ) {
+    return "tools";
+  }
+  return END;
+}
+
+function buildGraph() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
 
-  const model = process.env.DEFAULT_MODEL || "gemini-2.5-flash";
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const gemini = genAI.getGenerativeModel({
-    model,
-    systemInstruction: SYSTEM_PROMPT,
-    tools: [{ functionDeclarations: toolDeclarations }],
-  });
+  const model = new ChatGoogle({
+    apiKey,
+    model: process.env.DEFAULT_MODEL || "gemini-2.5-flash",
+    temperature: 0,
+  }).bindTools(allTools);
 
-  const chat = gemini.startChat({ history });
+  const toolNode = new ToolNode(allTools);
+
+  async function agentNode(state: typeof MessagesAnnotation.State) {
+    const response = await model.invoke(state.messages);
+    return { messages: [response] };
+  }
+
+  const workflow = new StateGraph(MessagesAnnotation)
+    .addNode("agent", agentNode)
+    .addNode("tools", toolNode)
+    .addEdge(START, "agent")
+    .addConditionalEdges("agent", shouldContinue, {
+      tools: "tools",
+      [END]: END,
+    })
+    .addEdge("tools", "agent");
+
+  return workflow.compile();
+}
+
+// ── Run Agent ──
+
+export async function runAgent(
+  userMessage: string,
+  history: { role: "user" | "model"; text: string }[]
+): Promise<AgentResponse> {
+  const graph = buildGraph();
+
+  const messages: BaseMessage[] = [new SystemMessage(SYSTEM_PROMPT)];
+
+  for (const h of history) {
+    const { HumanMessage, AIMessage: AIM } = await import(
+      "@langchain/core/messages"
+    );
+    if (h.role === "user") {
+      messages.push(new HumanMessage(h.text));
+    } else {
+      messages.push(new AIM(h.text));
+    }
+  }
+
+  const { HumanMessage } = await import("@langchain/core/messages");
+  messages.push(new HumanMessage(userMessage));
+
+  const result = await graph.invoke(
+    { messages },
+    { recursionLimit: 15 }
+  );
+
   const citations: Citation[] = [];
   let citationCounter = 1;
   let planA: PlanSlot[] | null = null;
   let planB: PlanSlot[] | null = null;
   const toolsUsed: string[] = [];
 
-  let response = await chat.sendMessage(userMessage);
+  for (const msg of result.messages) {
+    if (msg._getType() === "tool") {
+      try {
+        const content =
+          typeof msg.content === "string"
+            ? msg.content
+            : JSON.stringify(msg.content);
+        const parsed = JSON.parse(content);
 
-  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-    const candidate = response.response.candidates?.[0];
-    if (!candidate) break;
+        if (parsed._citation) {
+          const cit = parsed._citation as {
+            type: string;
+            title: string;
+            detail: string;
+          };
+          citations.push({
+            id: citationCounter++,
+            type: cit.type as Citation["type"],
+            title: cit.title,
+            detail: cit.detail,
+            timestamp: new Date().toLocaleString("vi-VN"),
+          });
+        }
 
-    const functionCalls: FunctionCall[] = [];
-    for (const part of candidate.content.parts) {
-      if (part.functionCall) {
-        functionCalls.push(part.functionCall);
+        if (parsed.planA) planA = parsed.planA;
+        if (parsed.planB) planB = parsed.planB;
+      } catch {
+        // skip non-JSON tool messages
+      }
+
+      if ("name" in msg && typeof msg.name === "string") {
+        toolsUsed.push(msg.name);
       }
     }
-
-    if (functionCalls.length === 0) break;
-
-    const functionResponses: Part[] = [];
-    for (const fc of functionCalls) {
-      toolsUsed.push(fc.name);
-      const result = executeToolCall(
-        fc.name,
-        (fc.args as Record<string, unknown>) || {}
-      );
-
-      const resultObj = result as Record<string, unknown>;
-      if (resultObj._citation) {
-        const cit = resultObj._citation as {
-          type: string;
-          title: string;
-          detail: string;
-        };
-        const id = citationCounter++;
-        citations.push({
-          id,
-          type: cit.type as Citation["type"],
-          title: cit.title,
-          detail: cit.detail,
-          timestamp: new Date().toLocaleString("vi-VN"),
-        });
-        resultObj._citationId = id;
-      }
-
-      if (fc.name === "generate_schedule") {
-        const schedResult = resultObj as {
-          planA: PlanSlot[] | null;
-          planB: PlanSlot[] | null;
-        };
-        if (schedResult.planA) planA = schedResult.planA;
-        if (schedResult.planB) planB = schedResult.planB;
-      }
-
-      functionResponses.push({
-        functionResponse: {
-          name: fc.name,
-          response: { result: resultObj },
-        },
-      });
-    }
-
-    response = await chat.sendMessage(functionResponses);
   }
 
+  const lastMessage = result.messages[result.messages.length - 1];
   let text =
-    response.response.candidates?.[0]?.content?.parts
-      ?.filter((p) => p.text)
-      .map((p) => p.text)
-      .join("\n") || "Xin lỗi, không thể xử lý yêu cầu.";
+    typeof lastMessage.content === "string"
+      ? lastMessage.content
+      : JSON.stringify(lastMessage.content);
 
   text = text.replace(/\[citation:(\d+)\]/g, "[$1]");
 
