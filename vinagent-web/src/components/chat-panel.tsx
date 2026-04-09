@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useVinAgent, type ChatMessage } from "@/lib/store";
+import { useBKAgent, type ChatMessage } from "@/lib/store";
 import { TypingText } from "./typing-text";
 import { CitationRef } from "./citation-popover";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const SUGGESTIONS = [
-  "Lên lịch HK Xuân 2026, tránh sáng, phải có Giải tích 2",
-  "Đăng ký 4 môn, ưu tiên cùng nhóm bạn",
-  "Xếp lịch không xung đột, ưu tiên chiều",
+  "Lên lịch HK 20252, tránh sáng, phải có Giải tích II và Vật lý II",
+  "Đăng ký 5 môn, ưu tiên lớp còn nhiều chỗ",
+  "Xếp lịch KTCT Mác-Lênin + GDTC 2 + CTDL&GT, tránh xung đột",
 ];
 
 function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: boolean }) {
-  const { citations } = useVinAgent();
+  const { citations } = useBKAgent();
   const isUser = message.role === "user";
   const [typingDone, setTypingDone] = useState(false);
 
@@ -52,7 +52,7 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
       {!isUser && (
         <Avatar className="size-7 shrink-0">
           <AvatarFallback className="bg-foreground text-background text-[10px] font-bold">
-            VA
+            BK
           </AvatarFallback>
         </Avatar>
       )}
@@ -75,7 +75,7 @@ function MessageBubble({ message, isLatest }: { message: ChatMessage; isLatest: 
 }
 
 export function ChatPanel() {
-  const { messages, prompt, setPrompt, generate, isTyping, flow, clarify } = useVinAgent();
+  const { messages, prompt, setPrompt, generate, isTyping, flow, clarify } = useBKAgent();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -95,10 +95,10 @@ export function ChatPanel() {
             <div className="flex h-full min-h-[60vh] flex-col items-center justify-center text-center">
               <Avatar className="size-10 mb-3">
                 <AvatarFallback className="bg-foreground text-background text-sm font-bold">
-                  VA
+                  BK
                 </AvatarFallback>
               </Avatar>
-              <h3 className="text-sm font-medium leading-normal">Xin chào! Mình là VinAgent</h3>
+              <h3 className="text-sm font-medium leading-normal">Xin chào! Mình là BKAgent</h3>
               <p className="mt-1 max-w-xs text-xs text-muted-foreground leading-relaxed">
                 Mô tả yêu cầu đăng ký học phần bằng ngôn ngữ tự nhiên, mình sẽ tạo kế hoạch tối ưu cho bạn.
               </p>
@@ -126,7 +126,7 @@ export function ChatPanel() {
             <div className="flex gap-2.5">
               <Avatar className="size-7 shrink-0">
                 <AvatarFallback className="bg-foreground text-background text-[10px] font-bold">
-                  VA
+                  BK
                 </AvatarFallback>
               </Avatar>
               <div className="rounded-lg rounded-tl-sm border border-border/50 px-3 py-2.5">

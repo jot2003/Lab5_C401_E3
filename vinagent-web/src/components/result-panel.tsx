@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { AlertTriangle, Pencil, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useVinAgent } from "@/lib/store";
+import { useBKAgent } from "@/lib/store";
 import { VisualCalendar } from "./visual-calendar";
 import { CitationList } from "./citation-popover";
 import { Button } from "@/components/ui/button";
@@ -94,7 +94,7 @@ function PlanListView({ courses, plan }: { courses: { code: string; name: string
 }
 
 export function ResultPanel() {
-  const store = useVinAgent();
+  const store = useBKAgent();
   const hasResult = store.flow !== "idle";
 
   useEffect(() => {

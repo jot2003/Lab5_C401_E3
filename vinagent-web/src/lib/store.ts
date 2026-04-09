@@ -23,7 +23,7 @@ export type CourseSlot = {
   room?: string;
 };
 
-interface VinAgentState {
+interface BKAgentState {
   prompt: string;
   flow: FlowState;
   selectedPlan: "A" | "B" | null;
@@ -74,7 +74,7 @@ function toCourseSlots(
   }));
 }
 
-export const useVinAgent = create<VinAgentState>((set, get) => ({
+export const useBKAgent = create<BKAgentState>((set, get) => ({
   prompt: "",
   flow: "idle",
   selectedPlan: null,

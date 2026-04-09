@@ -1,29 +1,104 @@
 [
   {
-    "code": "IT3010E",
+    "code": "MI1111",
+    "nameVi": "Giải tích I",
+    "nameEn": "Calculus I",
+    "credits": 4,
+    "description": "Giới hạn, đạo hàm, tích phân một biến, ứng dụng trong kỹ thuật.",
+    "department": "Toán",
+    "semester": "20252"
+  },
+  {
+    "code": "MI1121",
+    "nameVi": "Đại số",
+    "nameEn": "Linear Algebra",
+    "credits": 3,
+    "description": "Ma trận, định thức, hệ phương trình tuyến tính, không gian vector.",
+    "department": "Toán",
+    "semester": "20252"
+  },
+  {
+    "code": "MI1131",
+    "nameVi": "Giải tích II",
+    "nameEn": "Calculus II",
+    "credits": 3,
+    "description": "Tích phân bội, tích phân đường, tích phân mặt, chuỗi số.",
+    "department": "Toán",
+    "semester": "20252"
+  },
+  {
+    "code": "MI1141",
+    "nameVi": "Giải tích III",
+    "nameEn": "Calculus III",
+    "credits": 3,
+    "description": "Phương trình vi phân, biến đổi Laplace, chuỗi Fourier.",
+    "department": "Toán",
+    "semester": "20252"
+  },
+  {
+    "code": "MI2020",
+    "nameVi": "Xác suất thống kê",
+    "nameEn": "Probability and Statistics",
+    "credits": 3,
+    "description": "Lý thuyết xác suất, biến ngẫu nhiên, ước lượng, kiểm định giả thuyết.",
+    "department": "Toán",
+    "semester": "20252"
+  },
+  {
+    "code": "PH1110",
+    "nameVi": "Vật lý đại cương I",
+    "nameEn": "General Physics I",
+    "credits": 3,
+    "description": "Cơ học, nhiệt động lực học. Gồm lý thuyết + bài tập + thí nghiệm.",
+    "department": "Vật lý",
+    "semester": "20252",
+    "hasLab": true
+  },
+  {
+    "code": "PH1120",
+    "nameVi": "Vật lý đại cương II",
+    "nameEn": "General Physics II",
+    "credits": 3,
+    "description": "Điện từ, quang học, vật lý hiện đại. Gồm lý thuyết + bài tập + thí nghiệm.",
+    "department": "Vật lý",
+    "semester": "20252",
+    "hasLab": true
+  },
+  {
+    "code": "CH1010",
+    "nameVi": "Hóa đại cương",
+    "nameEn": "General Chemistry",
+    "credits": 3,
+    "description": "Cấu tạo nguyên tử, liên kết hóa học, nhiệt động hóa học, cân bằng hóa học.",
+    "department": "Hóa",
+    "semester": "20252",
+    "hasLab": true
+  },
+  {
+    "code": "IT1110",
+    "nameVi": "Tin học đại cương",
+    "nameEn": "Introduction to Computing",
+    "credits": 3,
+    "description": "Cơ bản về máy tính, lập trình C/C++, thuật toán cơ bản.",
+    "department": "CNTT",
+    "semester": "20252"
+  },
+  {
+    "code": "IT2110",
     "nameVi": "Cấu trúc dữ liệu và giải thuật",
     "nameEn": "Data Structures and Algorithms",
     "credits": 3,
-    "description": "Học về các cấu trúc dữ liệu cơ bản (mảng, danh sách liên kết, cây, đồ thị) và các giải thuật sắp xếp, tìm kiếm, tối ưu hóa.",
-    "department": "IT",
+    "description": "Mảng, danh sách liên kết, cây, đồ thị, sắp xếp, tìm kiếm.",
+    "department": "CNTT",
     "semester": "20252"
   },
   {
-    "code": "IT3020E",
-    "nameVi": "Toán rời rạc",
-    "nameEn": "Discrete Mathematics",
+    "code": "IT3010",
+    "nameVi": "Lập trình hướng đối tượng",
+    "nameEn": "Object-oriented Programming",
     "credits": 3,
-    "description": "Nền tảng toán học cho khoa học máy tính: logic, tập hợp, quan hệ, đồ thị, tổ hợp và lý thuyết số.",
-    "department": "IT",
-    "semester": "20252"
-  },
-  {
-    "code": "IT3070E",
-    "nameVi": "Hệ điều hành",
-    "nameEn": "Operating Systems",
-    "credits": 3,
-    "description": "Quản lý tiến trình, bộ nhớ, hệ thống file và thiết bị vào/ra trong hệ điều hành hiện đại.",
-    "department": "IT",
+    "description": "Đóng gói, kế thừa, đa hình, thiết kế OOP với Java/C++.",
+    "department": "CNTT",
     "semester": "20252"
   },
   {
@@ -31,62 +106,116 @@
     "nameVi": "Mạng máy tính",
     "nameEn": "Computer Networks",
     "credits": 3,
-    "description": "Kiến trúc mạng TCP/IP, các giao thức truyền thông, bảo mật mạng và ứng dụng mạng phân tán.",
-    "department": "IT",
+    "description": "Mô hình OSI, TCP/IP, routing, bảo mật mạng.",
+    "department": "CNTT",
     "semester": "20252"
   },
   {
-    "code": "IT3090E",
-    "nameVi": "Cơ sở dữ liệu",
-    "nameEn": "Database",
+    "code": "SSH1111",
+    "nameVi": "Triết học Mác - Lênin",
+    "nameEn": "Marxist-Leninist Philosophy",
     "credits": 3,
-    "description": "Mô hình quan hệ, SQL, thiết kế cơ sở dữ liệu, chuẩn hóa, giao tác và tối ưu hóa truy vấn.",
-    "department": "IT",
+    "description": "Chủ nghĩa duy vật biện chứng, chủ nghĩa duy vật lịch sử.",
+    "department": "Lý luận chính trị",
     "semester": "20252"
   },
   {
-    "code": "IT3100E",
-    "nameVi": "Lập trình hướng đối tượng",
-    "nameEn": "Object-oriented Programming",
-    "credits": 3,
-    "description": "Các nguyên lý OOP: đóng gói, kế thừa, đa hình, trừu tượng. Thiết kế phần mềm theo hướng đối tượng.",
-    "department": "IT",
+    "code": "SSH1121",
+    "nameVi": "Kinh tế chính trị Mác - Lênin",
+    "nameEn": "Marxist-Leninist Political Economy",
+    "credits": 2,
+    "description": "Học thuyết giá trị, giá trị thặng dư, kinh tế thị trường.",
+    "department": "Lý luận chính trị",
     "semester": "20252"
   },
   {
-    "code": "IT3160E",
-    "nameVi": "Nhập môn Trí tuệ nhân tạo",
-    "nameEn": "Introduction to Artificial Intelligence",
-    "credits": 3,
-    "description": "Tìm kiếm, xử lý ngôn ngữ tự nhiên, học có giám sát và không giám sát, mạng nơ-ron cơ bản.",
-    "department": "IT",
+    "code": "SSH1131",
+    "nameVi": "Chủ nghĩa xã hội khoa học",
+    "nameEn": "Scientific Socialism",
+    "credits": 2,
+    "description": "Sứ mệnh lịch sử của giai cấp công nhân, cách mạng XHCN.",
+    "department": "Lý luận chính trị",
     "semester": "20252"
   },
   {
-    "code": "IT3180E",
-    "nameVi": "Nhập môn Công nghệ phần mềm",
-    "nameEn": "Introduction to Software Engineering",
-    "credits": 3,
-    "description": "Vòng đời phần mềm, Agile/Scrum, kiểm thử, tái cấu trúc, thiết kế hệ thống và quản lý dự án.",
-    "department": "IT",
+    "code": "SSH1141",
+    "nameVi": "Lịch sử Đảng Cộng sản Việt Nam",
+    "nameEn": "History of the Communist Party of Vietnam",
+    "credits": 2,
+    "description": "Quá trình thành lập và lãnh đạo cách mạng của Đảng.",
+    "department": "Lý luận chính trị",
     "semester": "20252"
   },
   {
-    "code": "IT3190E",
-    "nameVi": "Học máy",
-    "nameEn": "Machine Learning",
-    "credits": 3,
-    "description": "Hồi quy, phân loại, clustering, mạng nơ-ron sâu, và các kỹ thuật tối ưu hóa cho mô hình ML.",
-    "department": "IT",
+    "code": "SSH1151",
+    "nameVi": "Tư tưởng Hồ Chí Minh",
+    "nameEn": "Ho Chi Minh Thought",
+    "credits": 2,
+    "description": "Hệ thống quan điểm của Chủ tịch Hồ Chí Minh.",
+    "department": "Lý luận chính trị",
     "semester": "20252"
   },
   {
-    "code": "IT2030",
-    "nameVi": "Kỹ năng Viết và Trình bày Kỹ thuật",
-    "nameEn": "Technical Writing and Presentation",
-    "credits": 3,
-    "description": "Viết báo cáo kỹ thuật, tóm tắt nghiên cứu và trình bày chuyên nghiệp trong môi trường công nghệ.",
-    "department": "IT",
+    "code": "FL1101",
+    "nameVi": "Tiếng Anh B1",
+    "nameEn": "English B1",
+    "credits": 2,
+    "description": "Tiếng Anh giao tiếp cơ bản, đọc hiểu văn bản kỹ thuật.",
+    "department": "Ngoại ngữ",
+    "semester": "20252"
+  },
+  {
+    "code": "FL1102",
+    "nameVi": "Tiếng Anh B2",
+    "nameEn": "English B2",
+    "credits": 2,
+    "description": "Tiếng Anh nâng cao, viết báo cáo kỹ thuật.",
+    "department": "Ngoại ngữ",
+    "semester": "20252"
+  },
+  {
+    "code": "PE1011",
+    "nameVi": "Giáo dục thể chất 1",
+    "nameEn": "Physical Education 1",
+    "credits": 1,
+    "description": "Thể dục cơ bản, điền kinh.",
+    "department": "GDTC",
+    "semester": "20252"
+  },
+  {
+    "code": "PE1021",
+    "nameVi": "Giáo dục thể chất 2",
+    "nameEn": "Physical Education 2",
+    "credits": 1,
+    "description": "Bóng đá / Bóng chuyền / Cầu lông / Bơi (chọn 1).",
+    "department": "GDTC",
+    "semester": "20252"
+  },
+  {
+    "code": "PE1031",
+    "nameVi": "Giáo dục thể chất 3",
+    "nameEn": "Physical Education 3",
+    "credits": 1,
+    "description": "Võ thuật / Aerobic / Yoga (chọn 1).",
+    "department": "GDTC",
+    "semester": "20252"
+  },
+  {
+    "code": "MIL1110",
+    "nameVi": "Giáo dục quốc phòng - An ninh 1",
+    "nameEn": "National Defense Education 1",
+    "credits": 2,
+    "description": "Đường lối quốc phòng, an ninh quốc gia.",
+    "department": "GDQP",
+    "semester": "20252"
+  },
+  {
+    "code": "MIL1120",
+    "nameVi": "Giáo dục quốc phòng - An ninh 2",
+    "nameEn": "National Defense Education 2",
+    "credits": 2,
+    "description": "Kỹ thuật chiến đấu bộ binh, bắn súng.",
+    "department": "GDQP",
     "semester": "20252"
   }
 ]

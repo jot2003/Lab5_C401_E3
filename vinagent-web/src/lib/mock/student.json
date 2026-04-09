@@ -1,32 +1,34 @@
 {
-  "id": "2A202600205",
-  "name": "Nguyễn Thanh Nam",
-  "major": "Computer Science",
-  "year": 3,
-  "gpa": 3.25,
+  "id": "20210001",
+  "name": "Nguyễn Văn An",
+  "major": "Khoa học Máy tính",
+  "program": "CTTT",
+  "year": 2,
+  "gpa": 3.15,
   "currentSemester": "20252",
   "completedCourses": [
+    "MI1111",
+    "MI1121",
+    "PH1110",
     "IT1110",
-    "IT2000",
-    "IT2030",
-    "IT3010E",
-    "IT3090E"
+    "FL1101",
+    "SSH1111",
+    "PE1011"
   ],
   "inProgressCourses": [],
-  "targetCourses": ["IT3020E", "IT3100E", "IT3080", "IT3160E"],
+  "targetCourses": ["MI1131", "PH1120", "IT2110", "SSH1121", "PE1021"],
   "preferences": {
     "avoidMorning": false,
     "avoidAfternoon": false,
-    "preferGroupFriends": false,
-    "priorityDays": ["Mon", "Tue", "Wed", "Thu"],
-    "maxCreditsPerSemester": 18
+    "preferGroupFriends": true,
+    "priorityDays": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+    "maxCreditsPerSemester": 21
   },
   "groupFriends": [
-    { "id": "2A202600372", "name": "Hoàng Kim Trí Thành" },
-    { "id": "2A202600019", "name": "Đặng Đinh Tú Anh" },
-    { "id": "2A202600423", "name": "Quách Gia Được" },
-    { "id": "2A202600490", "name": "Phạm Quốc Dũng" }
+    { "id": "20210042", "name": "Trần Minh Đức" },
+    { "id": "20210078", "name": "Lê Thị Hương" },
+    { "id": "20210156", "name": "Phạm Hoàng Nam" }
   ],
-  "advisorId": "advisor-001",
-  "advisorName": "TS. Nguyễn Văn An"
+  "advisorId": "advisor-cs-001",
+  "advisorName": "PGS.TS. Nguyễn Thanh Tùng"
 }

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { ConfidenceBadge, ConflictBadge } from "./vinagent-ui";
 
-describe("VinAgent UI components", () => {
+describe("BKAgent UI components", () => {
   it("renders conflict badges", () => {
     const { rerender } = render(<ConflictBadge hasConflict={false} />);
     expect(screen.getByText(/Không xung đột/i)).toBeInTheDocument();

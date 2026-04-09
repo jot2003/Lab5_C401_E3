@@ -41,7 +41,7 @@ export function AppSidebar() {
             VA
           </div>
           <span className="text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
-            VinAgent
+            BKAgent
           </span>
         </Link>
       </SidebarHeader>

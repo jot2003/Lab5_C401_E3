@@ -155,7 +155,7 @@ export function evaluatePlannerDecision(prompt: string): PlannerDecision {
       .join("; ");
     const cid = addCitation(
       "prerequisite",
-      "Kiểm tra điều kiện tiên quyết — VinUni SIS",
+      "Kiểm tra điều kiện tiên quyết — HUST dk-sis",
       `Phát hiện thiếu điều kiện tiên quyết: ${missingList}. Sinh viên cần hoàn thành các môn này trước.`
     );
     reasons.push({ text: `Thiếu điều kiện tiên quyết: ${missingList}.`, citationIds: [cid] });
@@ -176,7 +176,7 @@ export function evaluatePlannerDecision(prompt: string): PlannerDecision {
     const cid = addCitation(
       "sis",
       "Dữ liệu SIS HK 20252 — tình trạng chỗ ngồi",
-      `${toolSnapshot.seatDetail} Rủi ro hết chỗ rất cao. Nguồn: SIS VinUniversity, cập nhật ${toolSnapshot.sourceTimestamp}.`
+      `${toolSnapshot.seatDetail} Rủi ro hết chỗ rất cao. Nguồn: HUST dk-sis, cập nhật ${toolSnapshot.sourceTimestamp}.`
     );
     reasons.push({ text: "Rủi ro hết chỗ cao — IT3100E còn 6/140 chỗ. Cần kích hoạt Plan B ngay.", citationIds: [cid] });
   }
@@ -209,7 +209,7 @@ export function evaluatePlannerDecision(prompt: string): PlannerDecision {
   );
   const happyCid2 = addCitation(
     "prerequisite",
-    "Kiểm tra điều kiện tiên quyết — VinUni SIS",
+    "Kiểm tra điều kiện tiên quyết — HUST dk-sis",
     `Sinh viên đã hoàn thành: ${studentData.completedCourses.join(", ")}. Tất cả điều kiện tiên quyết cho HK 20252 đều đáp ứng.`
   );
   const communityCid = addCitation(

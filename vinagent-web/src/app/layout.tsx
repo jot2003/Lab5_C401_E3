@@ -22,9 +22,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VinAgent — Cố vấn học vụ thông minh",
+  title: "BKAgent — Cố vấn đăng ký tín chỉ thông minh",
   description:
-    "Hệ thống cố vấn học vụ AI cho sinh viên VinUniversity. Tối ưu đăng ký học phần bằng ngôn ngữ tự nhiên.",
+    "Hệ thống cố vấn đăng ký tín chỉ AI cho sinh viên Đại học Bách khoa Hà Nội. Tối ưu đăng ký môn học bằng ngôn ngữ tự nhiên.",
 };
 
 export default function RootLayout({

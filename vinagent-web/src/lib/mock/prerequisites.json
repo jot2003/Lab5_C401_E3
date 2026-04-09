@@ -1,52 +1,122 @@
 {
-  "IT3010E": {
+  "MI1111": {
     "required": [],
     "recommended": [],
-    "note": "Môn đại cương, không cần tiên quyết"
+    "note": "Giải tích I - môn đại cương, không cần tiên quyết"
   },
-  "IT3020E": {
+  "MI1121": {
     "required": [],
-    "recommended": ["IT1110"],
-    "note": "Toán rời rạc, không cần tiên quyết nhưng nên biết cơ bản toán"
+    "recommended": [],
+    "note": "Đại số - môn đại cương, không cần tiên quyết"
   },
-  "IT3070E": {
-    "required": ["IT3010E"],
-    "recommended": ["IT3020E"],
-    "note": "Cần nắm vững DSA trước khi học hệ điều hành"
+  "MI1131": {
+    "required": ["MI1111"],
+    "recommended": ["MI1121"],
+    "note": "Giải tích II yêu cầu đã hoàn thành Giải tích I"
+  },
+  "MI1141": {
+    "required": ["MI1131"],
+    "recommended": [],
+    "note": "Giải tích III yêu cầu đã hoàn thành Giải tích II"
+  },
+  "MI2020": {
+    "required": ["MI1111"],
+    "recommended": ["MI1131"],
+    "note": "Xác suất thống kê cần nền tảng Giải tích"
+  },
+  "PH1110": {
+    "required": [],
+    "recommended": ["MI1111"],
+    "note": "Vật lý I - đại cương, nên học song song với Giải tích I"
+  },
+  "PH1120": {
+    "required": ["PH1110"],
+    "recommended": ["MI1131"],
+    "note": "Vật lý II yêu cầu đã hoàn thành Vật lý I"
+  },
+  "CH1010": {
+    "required": [],
+    "recommended": [],
+    "note": "Hóa đại cương - môn đại cương, không cần tiên quyết"
+  },
+  "IT1110": {
+    "required": [],
+    "recommended": [],
+    "note": "Tin học đại cương - môn nhập môn, không cần tiên quyết"
+  },
+  "IT2110": {
+    "required": ["IT1110"],
+    "recommended": [],
+    "note": "CTDL&GT yêu cầu đã hoàn thành Tin học đại cương"
+  },
+  "IT3010": {
+    "required": ["IT2110"],
+    "recommended": [],
+    "note": "OOP yêu cầu đã hoàn thành CTDL&GT"
   },
   "IT3080": {
-    "required": ["IT3100E"],
-    "recommended": ["IT3070E"],
-    "note": "Cần biết lập trình để triển khai các giao thức mạng"
+    "required": ["IT2110"],
+    "recommended": ["IT3010"],
+    "note": "Mạng máy tính yêu cầu đã hoàn thành CTDL&GT"
   },
-  "IT3090E": {
-    "required": [],
-    "recommended": ["IT3010E"],
-    "note": "Cơ sở dữ liệu, không cần tiên quyết bắt buộc"
-  },
-  "IT3100E": {
-    "required": [],
-    "recommended": ["IT2000"],
-    "note": "OOP intro, không cần tiên quyết bắt buộc"
-  },
-  "IT3160E": {
-    "required": ["IT3010E", "IT3020E"],
-    "recommended": ["IT3190E"],
-    "note": "Cần DSA và Toán rời rạc làm nền tảng cho AI"
-  },
-  "IT3180E": {
-    "required": ["IT3100E"],
-    "recommended": ["IT3090E"],
-    "note": "Cần biết OOP để học software engineering"
-  },
-  "IT3190E": {
-    "required": ["IT3160E"],
-    "recommended": ["IT3020E"],
-    "note": "Machine Learning yêu cầu đã học Introduction to AI"
-  },
-  "IT2030": {
+  "SSH1111": {
     "required": [],
     "recommended": [],
-    "note": "Kỹ năng mềm, không có tiên quyết"
+    "note": "Triết học Mác-Lênin - môn đại cương, không cần tiên quyết"
+  },
+  "SSH1121": {
+    "required": ["SSH1111"],
+    "recommended": [],
+    "note": "KTCT Mác-Lênin yêu cầu đã hoàn thành Triết học"
+  },
+  "SSH1131": {
+    "required": ["SSH1121"],
+    "recommended": [],
+    "note": "CNXHKH yêu cầu đã hoàn thành KTCT Mác-Lênin"
+  },
+  "SSH1141": {
+    "required": ["SSH1131"],
+    "recommended": [],
+    "note": "Lịch sử Đảng yêu cầu đã hoàn thành CNXHKH"
+  },
+  "SSH1151": {
+    "required": ["SSH1141"],
+    "recommended": [],
+    "note": "Tư tưởng HCM yêu cầu đã hoàn thành Lịch sử Đảng"
+  },
+  "FL1101": {
+    "required": [],
+    "recommended": [],
+    "note": "Tiếng Anh B1 - không cần tiên quyết"
+  },
+  "FL1102": {
+    "required": ["FL1101"],
+    "recommended": [],
+    "note": "Tiếng Anh B2 yêu cầu đã hoàn thành B1"
+  },
+  "PE1011": {
+    "required": [],
+    "recommended": [],
+    "note": "GDTC 1 - không cần tiên quyết"
+  },
+  "PE1021": {
+    "required": ["PE1011"],
+    "recommended": [],
+    "note": "GDTC 2 yêu cầu đã hoàn thành GDTC 1"
+  },
+  "PE1031": {
+    "required": ["PE1021"],
+    "recommended": [],
+    "note": "GDTC 3 yêu cầu đã hoàn thành GDTC 2"
+  },
+  "MIL1110": {
+    "required": [],
+    "recommended": [],
+    "note": "GDQP 1 - không cần tiên quyết"
+  },
+  "MIL1120": {
+    "required": ["MIL1110"],
+    "recommended": [],
+    "note": "GDQP 2 yêu cầu đã hoàn thành GDQP 1"
   }
 }

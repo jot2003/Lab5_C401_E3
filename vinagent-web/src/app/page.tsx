@@ -9,7 +9,7 @@ const STEPS = [
   {
     step: 1,
     title: "Mô tả yêu cầu",
-    description: "Nhập bằng ngôn ngữ tự nhiên, VinAgent sẽ hiểu ý bạn.",
+    description: "Nhập bằng ngôn ngữ tự nhiên, BKAgent sẽ hiểu ý bạn.",
     icon: MessageSquare,
   },
   {
