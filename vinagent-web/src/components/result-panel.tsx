@@ -221,7 +221,9 @@ export function ResultPanel() {
     );
   }
 
-  const canRegister = store.selectedPlan !== null && store.confidenceScore >= 80;
+  const selectedCourses =
+    store.selectedPlan === "B" ? store.planBCourses : store.planACourses;
+  const canRegister = store.selectedPlan !== null && selectedCourses.length > 0;
 
   return (
     <>

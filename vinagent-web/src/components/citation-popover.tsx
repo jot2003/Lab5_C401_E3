@@ -2,7 +2,6 @@
 
 import type { Citation } from "@/lib/citations";
 import { getCitationLabel } from "@/lib/citations";
-import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,

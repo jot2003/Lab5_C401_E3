@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 export default function UserProfilePage() {
   const router = useRouter();
   const [verification, setVerification] = useState<{ ok: boolean; message: string } | null>(null);
-  const [pendingInvites, setPendingInvites] = useState<GroupInvite[]>([]);
 
   const student = useSyncExternalStore(
     () => () => {},
@@ -24,19 +23,26 @@ export default function UserProfilePage() {
     setVerification(verifyCurrentStudent());
   }
 
-  function refreshInvites(studentId: string) {
-    setPendingInvites(getPendingInvitesFor(studentId));
-  }
-
   function onLogout() {
     logoutAccount();
     router.push("/dang-nhap");
   }
 
-  useEffect(() => {
-    if (!student) return;
-    refreshInvites(student.id);
-  }, [student?.id]);
+  const pendingInvites = useSyncExternalStore(
+    (onChange) => {
+      if (typeof window === "undefined") return () => {};
+      const onStorage = () => onChange();
+      const onInviteChanged = () => onChange();
+      window.addEventListener("storage", onStorage);
+      window.addEventListener("bkagent:invites-changed", onInviteChanged);
+      return () => {
+        window.removeEventListener("storage", onStorage);
+        window.removeEventListener("bkagent:invites-changed", onInviteChanged);
+      };
+    },
+    () => (student ? getPendingInvitesFor(student.id) : []),
+    () => [] as GroupInvite[]
+  );
 
   if (!student) {
     return (
@@ -136,7 +142,6 @@ export default function UserProfilePage() {
                       className="h-8 text-xs"
                       onClick={() => {
                         markInviteStatus(invite.id, "rejected");
-                        refreshInvites(student.id);
                       }}
                     >
                       Từ chối

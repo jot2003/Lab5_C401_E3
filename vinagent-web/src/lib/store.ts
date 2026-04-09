@@ -324,6 +324,11 @@ export const useBKAgent = create<BKAgentState>()(
                       isTyping: false,
                       streamingSteps: s.streamingSteps,
                       flow: data.flow,
+                      selectedPlan:
+                        s.selectedPlan ??
+                        (needsPlanB
+                          ? (updatedPlanB.length > 0 ? "B" : updatedPlanA.length > 0 ? "A" : null)
+                          : (updatedPlanA.length > 0 ? "A" : updatedPlanB.length > 0 ? "B" : null)),
                       confidenceScore: data.confidenceScore,
                       redFlags: flags,
                       reasons: (data.citations ?? []).map((c: Citation) => ({

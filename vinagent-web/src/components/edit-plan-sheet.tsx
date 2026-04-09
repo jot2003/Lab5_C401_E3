@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { RefreshCw, Pencil } from "lucide-react";
 import { useBKAgent, type CourseSlot } from "@/lib/store";
 import scheduleData from "@/lib/mock/schedule.json";
@@ -60,10 +60,6 @@ export function EditPlanSheet() {
 
   const [swaps, setSwaps] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (store.editPlanOpen) setSwaps({});
-  }, [store.editPlanOpen]);
-
   function getAlternatives(code: string): ScheduleSlot[] {
     return (scheduleData as ScheduleSlot[]).filter(
       (s) => s.courseCode === code
@@ -92,7 +88,16 @@ export function EditPlanSheet() {
   }
 
   return (
-    <Sheet open={store.editPlanOpen} onOpenChange={(open) => !open && store.closeEditPlan()}>
+    <Sheet
+      open={store.editPlanOpen}
+      onOpenChange={(open) => {
+        if (open) {
+          setSwaps({});
+          return;
+        }
+        store.closeEditPlan();
+      }}
+    >
       <SheetContent className="w-[520px] max-w-[90vw] overflow-y-auto">
         <SheetHeader className="mb-4">
           <div className="flex items-center gap-2">

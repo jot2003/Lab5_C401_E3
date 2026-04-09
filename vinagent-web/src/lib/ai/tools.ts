@@ -122,11 +122,176 @@ const normalizedSchedule: NormalizedScheduleEntry[] = (scheduleData as GenericRe
   .map(normalizeScheduleEntry)
   .filter((s): s is NonNullable<typeof s> => s !== null);
 
+const normalizedCurriculum = (curriculumData as GenericRecord[])
+  .map((c) => ({
+    ma_hp: String(c.ma_hp ?? c.code ?? "").trim(),
+    ten_hp: String(c.ten_hp ?? c.nameVi ?? c.name ?? "").trim(),
+    ky_hoc: c.ky_hoc == null ? null : safeNum(c.ky_hoc, 0),
+    bat_buoc: c.bat_buoc,
+    tc_dt: safeNum(c.tc_dt ?? c.credits, 0),
+    ghi_chu_loai_hp: c.ghi_chu_loai_hp == null ? null : String(c.ghi_chu_loai_hp),
+  }))
+  .filter((c) => c.ma_hp.length > 0);
+
+const searchableCourseMap = new Map<string, ReturnType<typeof normalizeCourse>>();
+for (const c of normalizedCourses) {
+  searchableCourseMap.set(c.code, c);
+}
+for (const c of normalizedCurriculum) {
+  if (!searchableCourseMap.has(c.ma_hp)) {
+    searchableCourseMap.set(c.ma_hp, {
+      code: c.ma_hp,
+      nameVi: c.ten_hp || c.ma_hp,
+      nameEn: c.ten_hp || c.ma_hp,
+      credits: c.tc_dt ?? 0,
+      semester: c.ky_hoc == null ? "20252" : String(c.ky_hoc),
+      department: "",
+      description: "",
+    });
+  }
+}
+for (const s of normalizedSchedule) {
+  if (!searchableCourseMap.has(s.courseCode)) {
+    searchableCourseMap.set(s.courseCode, {
+      code: s.courseCode,
+      nameVi: s.courseNameVi || s.courseCode,
+      nameEn: s.courseNameEn || s.courseCode,
+      credits: s.credits ?? 0,
+      semester: s.semester ?? "20252",
+      department: "",
+      description: "",
+    });
+  }
+}
+const searchableCourses = [...searchableCourseMap.values()].filter(
+  (c): c is NonNullable<typeof c> => c !== null
+);
+const courseByCode = new Map(searchableCourses.map((c) => [c.code, c]));
+const scheduleCourseCodeSet = new Set(normalizedSchedule.map((s) => s.courseCode));
+
+const ROMAN_TO_ARABIC: Record<string, string> = {
+  i: "1",
+  ii: "2",
+  iii: "3",
+  iv: "4",
+  v: "5",
+  vi: "6",
+  vii: "7",
+  viii: "8",
+  ix: "9",
+  x: "10",
+};
+const ARABIC_TO_ROMAN = new Map(
+  Object.entries(ROMAN_TO_ARABIC).map(([roman, arabic]) => [arabic, roman])
+);
+
+function normalizeLooseText(input: string): string {
+  return input
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function aliasVariants(input: string): string[] {
+  const base = normalizeLooseText(input);
+  if (!base) return [];
+  const variants = new Set<string>([base]);
+  const tokens = base.split(" ");
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (ROMAN_TO_ARABIC[t]) {
+      const next = [...tokens];
+      next[i] = ROMAN_TO_ARABIC[t];
+      variants.add(next.join(" "));
+    }
+    const roman = ARABIC_TO_ROMAN.get(t);
+    if (roman) {
+      const next = [...tokens];
+      next[i] = roman;
+      variants.add(next.join(" "));
+    }
+  }
+  return [...variants];
+}
+
+const aliasToCodes = new Map<string, string[]>();
+function addAlias(alias: string, code: string) {
+  if (!alias) return;
+  const current = aliasToCodes.get(alias) ?? [];
+  if (!current.includes(code)) current.push(code);
+  aliasToCodes.set(alias, current);
+}
+for (const c of searchableCourses) {
+  addAlias(normalizeLooseText(c.code), c.code);
+  for (const v of aliasVariants(c.nameVi)) addAlias(v, c.code);
+  for (const v of aliasVariants(c.nameEn)) addAlias(v, c.code);
+}
+
+function resolveCourseCodes(inputs: string[]): {
+  resolved: string[];
+  unresolved: string[];
+  inputToCode: Record<string, string>;
+} {
+  const resolved = new Set<string>();
+  const unresolved: string[] = [];
+  const inputToCode: Record<string, string> = {};
+
+  for (const raw of inputs) {
+    const key = String(raw ?? "").trim();
+    if (!key) continue;
+
+    const compactCode = key.toUpperCase().replace(/\s+/g, "");
+    let candidates: string[] = [];
+    if (courseByCode.has(compactCode) || scheduleCourseCodeSet.has(compactCode)) {
+      candidates = [compactCode];
+    } else {
+      const byAlias = new Set<string>();
+      for (const v of aliasVariants(key)) {
+        for (const c of aliasToCodes.get(v) ?? []) byAlias.add(c);
+      }
+      candidates = [...byAlias];
+    }
+
+    if (candidates.length === 0) {
+      unresolved.push(key);
+      continue;
+    }
+
+    candidates.sort((a, b) => {
+      const aSched = scheduleCourseCodeSet.has(a) ? 1 : 0;
+      const bSched = scheduleCourseCodeSet.has(b) ? 1 : 0;
+      if (aSched !== bSched) return bSched - aSched;
+      const aCurr = normalizedCurriculum.some((c) => c.ma_hp === a) ? 1 : 0;
+      const bCurr = normalizedCurriculum.some((c) => c.ma_hp === b) ? 1 : 0;
+      if (aCurr !== bCurr) return bCurr - aCurr;
+      return a.localeCompare(b);
+    });
+
+    const chosen = candidates[0];
+    resolved.add(chosen);
+    inputToCode[key] = chosen;
+  }
+
+  return { resolved: [...resolved], unresolved, inputToCode };
+}
+
+const STUDENT_PROFILE_CACHE_TTL_MS = 10 * 60 * 1000;
+let studentProfileCache: { at: number; payload: string } | null = null;
+
 // ── Tool 1: Get Student Profile ──
 
 export const getStudentProfileTool = tool(
   async () => {
-    return JSON.stringify({
+    if (
+      studentProfileCache &&
+      Date.now() - studentProfileCache.at < STUDENT_PROFILE_CACHE_TTL_MS
+    ) {
+      return studentProfileCache.payload;
+    }
+    const payload = JSON.stringify({
       ...studentData,
       _citation: {
         type: "sis",
@@ -134,6 +299,8 @@ export const getStudentProfileTool = tool(
         detail: `${studentData.name} (${studentData.id}), ${studentData.major} năm ${studentData.year}, GPA ${studentData.gpa}. Đã hoàn thành: ${studentData.completedCourses.join(", ")}.`,
       },
     });
+    studentProfileCache = { at: Date.now(), payload };
+    return payload;
   },
   {
     name: "get_student_profile",
@@ -147,14 +314,16 @@ export const getStudentProfileTool = tool(
 
 export const searchCoursesTool = tool(
   async ({ query }: { query?: string }) => {
-    let results = normalizedCourses;
+    let results = searchableCourses;
     if (query) {
-      const q = query.toLowerCase();
-      results = normalizedCourses.filter(
+      const q = normalizeLooseText(query);
+      const resolved = resolveCourseCodes([query]).resolved;
+      results = searchableCourses.filter(
         (c) =>
-          c.code.toLowerCase().includes(q) ||
-          c.nameVi.toLowerCase().includes(q) ||
-          c.nameEn.toLowerCase().includes(q)
+          normalizeLooseText(c.code).includes(q) ||
+          normalizeLooseText(c.nameVi).includes(q) ||
+          normalizeLooseText(c.nameEn).includes(q) ||
+          resolved.includes(c.code)
       );
     }
     return JSON.stringify({
@@ -187,8 +356,10 @@ export const searchCoursesTool = tool(
 
 export const checkScheduleTool = tool(
   async ({ course_codes }: { course_codes: string[] }) => {
+    const resolved = resolveCourseCodes(course_codes);
+    const codes = resolved.resolved;
     const sections = normalizedSchedule.filter((s) =>
-      course_codes.includes(s.courseCode)
+      codes.includes(s.courseCode)
     );
     const now = new Date().toLocaleString("vi-VN");
     const summary = sections.map((s) => {
@@ -218,7 +389,7 @@ export const checkScheduleTool = tool(
       _citation: {
         type: "sis",
         title: `Dữ liệu chỗ ngồi HK 20252 — dk-sis (${now})`,
-        detail: `${summary.length} lớp cho ${course_codes.join(", ")}. ${highRisk.length > 0 ? `⚠ ${highRisk.length} lớp nguy cơ hết chỗ.` : "Tất cả còn chỗ."} ${criticalSlots.length > 0 ? `${criticalSlots.length} lớp còn dưới 5 chỗ!` : ""} Cập nhật: ${now}.`,
+        detail: `${summary.length} lớp cho ${codes.join(", ")}.${resolved.unresolved.length > 0 ? ` Không map được: ${resolved.unresolved.join(", ")}.` : ""} ${highRisk.length > 0 ? `⚠ ${highRisk.length} lớp nguy cơ hết chỗ.` : "Tất cả còn chỗ."} ${criticalSlots.length > 0 ? `${criticalSlots.length} lớp còn dưới 5 chỗ!` : ""} Cập nhật: ${now}.`,
       },
     });
   },
@@ -246,7 +417,8 @@ export const checkPrerequisitesTool = tool(
     >;
     const completed = studentData.completedCourses;
 
-    const results = course_codes.map((code) => {
+    const resolved = resolveCourseCodes(course_codes);
+    const results = resolved.resolved.map((code) => {
       const req = prereqs[code];
       if (!req)
         return {
@@ -275,13 +447,14 @@ export const checkPrerequisitesTool = tool(
     return JSON.stringify({
       allOk,
       results,
+      unresolved: resolved.unresolved,
       studentCompleted: completed,
       _citation: {
         type: "prerequisite",
         title: "Kiểm tra điều kiện tiên quyết — HUST dk-sis",
         detail: allOk
-          ? `Sinh viên đã hoàn thành: ${completed.join(", ")}. Tất cả điều kiện tiên quyết cho ${course_codes.join(", ")} đều đáp ứng.`
-          : `Thiếu tiên quyết: ${failedCourses.map((f) => `${f.course} (cần: ${f.missing.join(", ")})`).join("; ")}.`,
+          ? `Sinh viên đã hoàn thành: ${completed.join(", ")}. Tất cả điều kiện tiên quyết cho ${resolved.resolved.join(", ")} đều đáp ứng.${resolved.unresolved.length > 0 ? ` Không map được: ${resolved.unresolved.join(", ")}.` : ""}`
+          : `Thiếu tiên quyết: ${failedCourses.map((f) => `${f.course} (cần: ${f.missing.join(", ")})`).join("; ")}.${resolved.unresolved.length > 0 ? ` Không map được: ${resolved.unresolved.join(", ")}.` : ""}`,
       },
     });
   },
@@ -316,8 +489,10 @@ export const generateScheduleTool = tool(
     avoid_afternoon?: boolean;
     prefer_group_friends?: boolean;
   }) => {
+    const resolved = resolveCourseCodes(target_courses);
+    const resolvedTargets = resolved.resolved;
     const sectionsByCourse: Record<string, NormalizedScheduleEntry[]> = {};
-    for (const code of target_courses) {
+    for (const code of resolvedTargets) {
       let sections = normalizedSchedule.filter((s) => s.courseCode === code);
       if (avoid_morning) sections = sections.filter((s) => s.startHour >= 9.5);
       if (avoid_afternoon) sections = sections.filter((s) => s.startHour < 14);
@@ -338,7 +513,7 @@ export const generateScheduleTool = tool(
 
     function buildPlan(preferLowRisk: boolean): NormalizedScheduleEntry[] | null {
       const plan: NormalizedScheduleEntry[] = [];
-      for (const code of target_courses) {
+      for (const code of resolvedTargets) {
         let candidates = sectionsByCourse[code] || [];
         if (candidates.length === 0) continue;
 
@@ -365,7 +540,7 @@ export const generateScheduleTool = tool(
           }
         }
       }
-      return plan.length === target_courses.length ? plan : null;
+      return plan.length === resolvedTargets.length ? plan : null;
     }
 
     const planA = buildPlan(true);
@@ -392,12 +567,14 @@ export const generateScheduleTool = tool(
       planB: formatPlan(planB),
       planAScore: planA ? scorePlan(planA) : 0,
       planBScore: planB ? scorePlan(planB) : 0,
-      targetCourses: target_courses,
+      targetCourses: resolvedTargets,
+      unresolvedTargets: resolved.unresolved,
+      inputToCode: resolved.inputToCode,
       constraints: { avoid_morning, avoid_afternoon, prefer_group_friends },
       _citation: {
         type: "sis",
         title: "Thuật toán xếp lịch — BKAgent Scheduler",
-        detail: `Đã tạo ${planA ? "Plan A" : ""}${planA && planB ? " + " : ""}${planB ? "Plan B" : ""} cho ${target_courses.join(", ")}. Dữ liệu: TKB20252-FULL, ${scheduleData.length} lớp.`,
+        detail: `Đã tạo ${planA ? "Plan A" : ""}${planA && planB ? " + " : ""}${planB ? "Plan B" : ""} cho ${resolvedTargets.join(", ")}.${resolved.unresolved.length > 0 ? ` Không map được: ${resolved.unresolved.join(", ")}.` : ""} Dữ liệu: TKB20252-FULL, ${scheduleData.length} lớp.`,
       },
     });
   },
@@ -449,16 +626,7 @@ export const getRecommendedCoursesTool = tool(
         ? (isSpring ? 4 : 3)
         : student.year * 2;
 
-    const curriculum = (curriculumData as GenericRecord[])
-      .map((c) => ({
-        ma_hp: String(c.ma_hp ?? c.code ?? "").trim(),
-        ten_hp: String(c.ten_hp ?? c.nameVi ?? c.name ?? "").trim(),
-        ky_hoc: c.ky_hoc == null ? null : safeNum(c.ky_hoc, 0),
-        bat_buoc: c.bat_buoc,
-        tc_dt: safeNum(c.tc_dt ?? c.credits, 0),
-        ghi_chu_loai_hp: c.ghi_chu_loai_hp == null ? null : String(c.ghi_chu_loai_hp),
-      }))
-      .filter((c) => c.ma_hp.length > 0) as CurriculumEntry[];
+    const curriculum = normalizedCurriculum as CurriculumEntry[];
 
     const toRequirement = (v: CurriculumEntry["bat_buoc"]) => {
       if (v === true || String(v).toLowerCase() === "true" || String(v) === "1") return "mandatory";
@@ -474,25 +642,62 @@ export const getRecommendedCoursesTool = tool(
     // Filter out already completed courses
     const completed = student.completedCourses;
     const mandatoryPending = mandatory.filter((c) => !completed.includes(c.ma_hp));
+    const scheduleCourseSet = new Set(normalizedSchedule.map((s) => s.courseCode));
+    const mandatoryPendingAvailable = mandatoryPending.filter((c) =>
+      scheduleCourseSet.has(c.ma_hp)
+    );
+    const mandatoryPendingNoSchedule = mandatoryPending.filter(
+      (c) => !scheduleCourseSet.has(c.ma_hp)
+    );
+    const mandatoryCodeSet = new Set(mandatoryPendingAvailable.map((c) => c.ma_hp));
+
+    // Keep default semester flow, but append student personal targets
+    // that are not completed and currently have open sections.
+    const personalTargets = Array.isArray((student as GenericRecord).targetCourses)
+      ? ((student as GenericRecord).targetCourses as unknown[]).map((v) => String(v).trim()).filter(Boolean)
+      : [];
+    const personalTargetsAvailable = personalTargets
+      .filter((code) => !completed.includes(code))
+      .filter((code) => scheduleCourseSet.has(code))
+      .filter((code) => !mandatoryCodeSet.has(code))
+      .map((code) => {
+        const fromCurriculum = curriculum.find((c) => c.ma_hp === code);
+        const fromCatalog = searchableCourses.find((c) => c.code === code);
+        return {
+          code,
+          name: fromCurriculum?.ten_hp ?? fromCatalog?.nameVi ?? code,
+          credits: fromCurriculum?.tc_dt ?? fromCatalog?.credits ?? 0,
+          type: "Ưu tiên cá nhân",
+        };
+      });
 
     return JSON.stringify({
       semNum,
       studentYear: student.year,
       currentSemester: semCode,
-      mandatoryPending: mandatoryPending.map((c) => ({
+      mandatoryPending: [
+        ...mandatoryPendingAvailable.map((c) => ({
+          code: c.ma_hp,
+          name: c.ten_hp,
+          credits: c.tc_dt,
+          type: c.ghi_chu_loai_hp,
+        })),
+        ...personalTargetsAvailable,
+      ],
+      personalTargetsAvailable,
+      mandatoryPendingNoSchedule: mandatoryPendingNoSchedule.map((c) => ({
         code: c.ma_hp,
         name: c.ten_hp,
         credits: c.tc_dt,
-        type: c.ghi_chu_loai_hp,
       })),
       mandatory: mandatory.map((c) => ({ code: c.ma_hp, name: c.ten_hp, credits: c.tc_dt })),
       optional: optional.map((c) => ({ code: c.ma_hp, name: c.ten_hp, credits: c.tc_dt })),
       moduleChoice: moduleChoice.map((c) => ({ code: c.ma_hp, name: c.ten_hp, credits: c.tc_dt, note: c.ghi_chu_loai_hp })),
-      totalMandatoryCredits: mandatoryPending.reduce((s, c) => s + (c.tc_dt || 0), 0),
+      totalMandatoryCredits: mandatoryPendingAvailable.reduce((s, c) => s + (c.tc_dt || 0), 0),
       _citation: {
         type: "sis",
         title: `CTĐT CTTT — Học kỳ ${semNum} (HK ${semCode})`,
-        detail: `Sinh viên năm ${student.year}: ${mandatoryPending.length} môn bắt buộc chưa học (${mandatoryPending.map((c) => c.ma_hp).join(", ")}). Nguồn: Chương trình đào tạo CTTT HUST.`,
+        detail: `Sinh viên năm ${student.year}: ${mandatoryPendingAvailable.length} môn bắt buộc có lớp mở (${mandatoryPendingAvailable.map((c) => c.ma_hp).join(", ")}).${personalTargetsAvailable.length > 0 ? ` Ưu tiên cá nhân có lớp mở: ${personalTargetsAvailable.map((c) => c.code).join(", ")}.` : ""}${mandatoryPendingNoSchedule.length > 0 ? ` ${mandatoryPendingNoSchedule.length} môn chưa có lớp mở: ${mandatoryPendingNoSchedule.map((c) => c.ma_hp).join(", ")}.` : ""} Nguồn: Chương trình đào tạo CTTT HUST.`,
       },
     });
   },
